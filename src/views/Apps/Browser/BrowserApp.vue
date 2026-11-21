@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { newsNav, bookmarks, newsList as news, newsDetail, crashReport } from '@/data/newsData'
 import { useGameStore } from '@/stores/gameStore'
+import HomePage from './HomePage.vue'
 import NewsList from './NewsList.vue'
 import NewsDetail from './NewsDetail.vue'
 import ForumHome from './Forum/ForumHome.vue'
@@ -9,11 +10,11 @@ import ForumHome from './Forum/ForumHome.vue'
 const game = useGameStore()
 
 const tabs = ref([
-  { id: 't1', title: '新闻首页', type: 'news', view: 'list' }
+  { id: 't1', title: '新标签页', type: 'home', view: 'home' }
 ])
 const activeTab = ref('t1')
-const address = ref('news.cn')
-const history = ref(['news.cn'])
+const address = ref('')
+const history = ref([''])
 const histIndex = ref(0)
 const showBookmarks = ref(false)
 
@@ -21,62 +22,91 @@ const active = computed(() => tabs.value.find((t) => t.id === activeTab.value))
 
 function newTab() {
   const id = 't' + Date.now()
-  tabs.value.push({ id, title: '新标签页', type: 'blank', view: 'blank' })
+  tabs.value.push({ id, title: '新标签页', type: 'home', view: 'home' })
   activeTab.value = id
+  histIndex.value = 0
+  history.value = ['']
+  address.value = ''
 }
 function closeTab(id, e) {
   e.stopPropagation()
   tabs.value = tabs.value.filter((t) => t.id !== id)
   if (activeTab.value === id && tabs.value.length) activeTab.value = tabs.value[0].id
 }
+function navigate(type, view, title, url, extra = {}) {
+  const tab = active.value
+  if (!tab) return
+  Object.assign(tab, { type, view, title }, extra)
+  address.value = url
+  // 截断前进历史后再压入（符合真实浏览器行为）
+  history.value = history.value.slice(0, histIndex.value + 1)
+  history.value.push(url)
+  histIndex.value = history.value.length - 1
+}
+
 function go(urlValue) {
   const url = (urlValue || address.value).trim()
   if (!url) return
   if (url.includes('qianwan') || url.includes('forum')) return openForum()
-  address.value = url
-  history.value.push(url)
-  histIndex.value = history.value.length - 1
+  if (url.includes('news')) return openNewsHome()
+  navigate('news', 'list', '新闻网', url)
+}
+
+function openNewsHome() {
+  navigate('news', 'list', '新闻网', 'news.cn')
+}
+
+function doSearch(keyword) {
+  navigate('news', 'list', `搜索：${keyword}`, 'news.cn')
+  game.addClue('browser-search')
+}
+// 根据地址恢复视图（前进/后退用）
+function renderAddress(url) {
   const tab = active.value
   if (!tab) return
-  tab.type = 'news'
-  tab.view = 'list'
-  tab.title = '新闻首页'
+  if (!url) {
+    Object.assign(tab, { type: 'home', view: 'home', title: '新标签页' })
+  } else if (url.includes('qianwan') || url.includes('forum')) {
+    Object.assign(tab, { type: 'forum', view: 'forum', title: '浅湾论坛' })
+  } else if (url.includes('article/')) {
+    const id = Number(url.split('article/')[1])
+    Object.assign(tab, {
+      type: 'news', view: 'detail', newsId: id,
+      title: (newsDetail[id] || crashReport).title.slice(0, 12) + '…'
+    })
+  } else {
+    Object.assign(tab, { type: 'news', view: 'list', title: '新闻网' })
+  }
 }
 function back() {
   if (histIndex.value > 0) {
     histIndex.value--
     address.value = history.value[histIndex.value]
+    renderAddress(address.value)
   }
 }
 function forward() {
   if (histIndex.value < history.value.length - 1) {
     histIndex.value++
     address.value = history.value[histIndex.value]
+    renderAddress(address.value)
   }
 }
 function openNews(id) {
-  const tab = active.value
-  tab.type = 'news'
-  tab.view = 'detail'
-  tab.newsId = id
-  tab.title = (newsDetail[id] || crashReport).title.slice(0, 12) + '…'
-  address.value = 'news.cn/article/' + id
+  navigate('news', 'detail', (newsDetail[id] || crashReport).title.slice(0, 12) + '…', `news.cn/article/${id}`, { newsId: id })
 }
 function backToList() {
-  const tab = active.value
-  tab.view = 'list'
-  tab.title = '新闻首页'
-  address.value = 'news.cn'
+  navigate('news', 'list', '新闻网', 'news.cn')
 }
 function openForum() {
   game.forumVisited = true
   game.addClue('forum-visited')
-  const tab = active.value
-  tab.type = 'forum'
-  tab.view = 'forum'
-  tab.title = '浅湾论坛'
-  address.value = 'qianwan.forum'
+  navigate('forum', 'forum', '浅湾论坛', 'qianwan.forum')
   showBookmarks.value = false
+}
+function gotoSite(action) {
+  if (action === 'forum') openForum()
+  else openNewsHome()
 }
 </script>
 
@@ -98,7 +128,7 @@ function openForum() {
     <div class="toolbar">
       <button class="nav" @click="back">‹</button>
       <button class="nav" @click="forward">›</button>
-      <button class="nav" @click="address = 'news.cn'; go('news.cn')">↻</button>
+      <button class="nav" @click="renderAddress(address); go(address)">↻</button>
       <div class="addr">
         <span class="lock">🔒</span>
         <input v-model="address" @keyup.enter="go()" />
@@ -113,8 +143,13 @@ function openForum() {
     </div>
     <div class="page">
       <template v-if="active">
+        <HomePage
+          v-if="active.type === 'home'"
+          @search="doSearch"
+          @goto="gotoSite"
+        />
         <NewsList
-          v-if="active.type === 'news' && active.view === 'list'"
+          v-else-if="active.type === 'news' && active.view === 'list'"
           :news="news" :nav="newsNav" @open="openNews"
         />
         <NewsDetail
@@ -123,10 +158,6 @@ function openForum() {
           @back="backToList"
         />
         <ForumHome v-else-if="active.type === 'forum'" />
-        <div v-else class="blank-page">
-          <div class="blank-logo">🌐</div>
-          <p class="muted">输入网址，或从书签进入</p>
-        </div>
       </template>
     </div>
   </div>

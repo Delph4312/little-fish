@@ -70,9 +70,7 @@ function onKey(e) {
         <button @click="submit">→</button>
       </div>
       <div class="err" v-if="error">密码不正确</div>
-      <div class="tip">提示：姐姐的名字（拼音）</div>
-
-      <div class="hint-bar">这台电脑属于一个高三学生。他好像遇到麻烦了。</div>
+      <div class="tip">提示：姐姐</div>
     </div>
   </div>
 </template>

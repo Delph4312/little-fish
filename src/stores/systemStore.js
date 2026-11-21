@@ -85,6 +85,32 @@ export const useSystemStore = defineStore('system', {
       win.y = Math.max(0, win.y + dy)
     },
 
+    resizeWindow(id, { dx = 0, dy = 0, dw = 0, dh = 0, left = false, top = false }) {
+      const win = this.windows.find((w) => w.id === id)
+      if (!win || win.maximized) return
+      const minW = 480
+      const minH = 340
+      let { x, y, w, h } = win
+      // 右/下方向：改变宽高
+      w = Math.max(minW, w + dw)
+      h = Math.max(minH, h + dh)
+      // 左/上方向：固定右/下边界，移动左上角
+      if (left) {
+        const newW = Math.max(minW, w - dx)
+        x = x + (w - newW)
+        w = newW
+      }
+      if (top) {
+        const newH = Math.max(minH, h - dy)
+        y = y + (h - newH)
+        h = newH
+      }
+      win.x = Math.max(0, x)
+      win.y = Math.max(0, y)
+      win.w = w
+      win.h = h
+    },
+
     unlock() {
       this.locked = false
     },
