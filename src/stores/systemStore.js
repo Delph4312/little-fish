@@ -1,0 +1,114 @@
+import { defineStore } from 'pinia'
+
+/**
+ * 系统状态：模拟一台电脑的窗口管理器 + 通知中心
+ * 每个窗口：{ id, app, title, icon, component, props, x, y, w, h, z, minimized, maximized }
+ */
+export const useSystemStore = defineStore('system', {
+  state: () => ({
+    windows: [],
+    zCounter: 10,
+    activeWindowId: null,
+    notifications: [],
+    wallpaper: 'beach',
+    locked: true,
+    // 全局断电/断网演出，鲸鱼先生用
+    networkDown: false,
+    glitch: false
+  }),
+
+  getters: {
+    visibleWindows: (s) =>
+      s.windows.filter((w) => !w.minimized).sort((a, b) => a.z - b.z),
+    activeWindow: (s) => s.windows.find((w) => w.id === s.activeWindowId) || null,
+    isOpen: (s) => (app) => s.windows.some((w) => w.app === app)
+  },
+
+  actions: {
+    openWindow({ app, title, icon, component, props = {}, w = 820, h = 560 }) {
+      const existing = this.windows.find((win) => win.app === app)
+      if (existing) {
+        this.focusWindow(existing.id)
+        return existing.id
+      }
+      const offset = (this.windows.length % 6) * 28
+      const id = `${app}-${Date.now()}`
+      this.windows.push({
+        id,
+        app,
+        title,
+        icon,
+        component,
+        props,
+        x: 90 + offset,
+        y: 60 + offset,
+        w,
+        h,
+        z: ++this.zCounter,
+        minimized: false,
+        maximized: false
+      })
+      this.activeWindowId = id
+      return id
+    },
+
+    focusWindow(id) {
+      const win = this.windows.find((w) => w.id === id)
+      if (!win) return
+      win.z = ++this.zCounter
+      this.activeWindowId = id
+    },
+
+    closeWindow(id) {
+      this.windows = this.windows.filter((w) => w.id !== id)
+      if (this.activeWindowId === id) {
+        const top = [...this.windows].sort((a, b) => b.z - a.z)[0]
+        this.activeWindowId = top ? top.id : null
+      }
+    },
+
+    minimizeWindow(id) {
+      const win = this.windows.find((w) => w.id === id)
+      if (win) win.minimized = true
+      if (this.activeWindowId === id) this.activeWindowId = null
+    },
+
+    toggleMaximize(id) {
+      const win = this.windows.find((w) => w.id === id)
+      if (win) win.maximized = !win.maximized
+    },
+
+    moveWindow(id, dx, dy) {
+      const win = this.windows.find((w) => w.id === id)
+      if (!win || win.maximized) return
+      win.x = Math.max(0, win.x + dx)
+      win.y = Math.max(0, win.y + dy)
+    },
+
+    unlock() {
+      this.locked = false
+    },
+
+    notify({ from = '系统', text, type = 'info', duration = 6000, avatar }) {
+      const id = `n-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+      this.notifications.push({ id, from, text, type, avatar })
+      if (duration > 0) {
+        setTimeout(() => this.removeNotification(id), duration)
+      }
+      return id
+    },
+
+    removeNotification(id) {
+      this.notifications = this.notifications.filter((n) => n.id !== id)
+    },
+
+    setNetworkDown(value) {
+      this.networkDown = value
+    },
+
+    triggerGlitch(ms = 900) {
+      this.glitch = true
+      setTimeout(() => (this.glitch = false), ms)
+    }
+  }
+})

@@ -1,0 +1,23 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+
+# 日志
+*.log
+npm-debug.log*
+
+# 本地环境
+.env
+.env.local
+.env.*.local
+
+# 编辑器 / 系统
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.bak
