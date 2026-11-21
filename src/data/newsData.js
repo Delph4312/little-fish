@@ -5,8 +5,14 @@
 
 export const newsNav = ['首页', '社会', '娱乐', '财经', '法治', '生活']
 
+// 书签：登录后显示，浅湾论坛夹在多个书签之中
 export const bookmarks = [
-  { name: '浅湾论坛', url: 'qianwan.forum', app: 'forum', note: '你弟的号还登着' }
+  { name: '淘宝', url: 'taobao.com', action: 'other' },
+  { name: '京东', url: 'jd.com', action: 'other' },
+  { name: '哔哩哔哩', url: 'bilibili.com', action: 'other' },
+  { name: '浅湾论坛', url: 'qianwan.forum', action: 'forum' },
+  { name: '知乎', url: 'zhihu.com', action: 'other' },
+  { name: '网易邮箱', url: 'mail.163.com', action: 'other' }
 ]
 
 export const newsList = [

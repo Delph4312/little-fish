@@ -2,12 +2,14 @@
 import { ref, computed } from 'vue'
 import { newsNav, bookmarks, newsList as news, newsDetail, crashReport } from '@/data/newsData'
 import { useGameStore } from '@/stores/gameStore'
+import { useSystemStore } from '@/stores/systemStore'
 import HomePage from './HomePage.vue'
 import NewsList from './NewsList.vue'
 import NewsDetail from './NewsDetail.vue'
 import ForumHome from './Forum/ForumHome.vue'
 
 const game = useGameStore()
+const system = useSystemStore()
 
 const tabs = ref([
   { id: 't1', title: '新标签页', type: 'home', view: 'home' }
@@ -16,7 +18,6 @@ const activeTab = ref('t1')
 const address = ref('')
 const history = ref([''])
 const histIndex = ref(0)
-const showBookmarks = ref(false)
 
 const active = computed(() => tabs.value.find((t) => t.id === activeTab.value))
 
@@ -38,7 +39,6 @@ function navigate(type, view, title, url, extra = {}) {
   if (!tab) return
   Object.assign(tab, { type, view, title }, extra)
   address.value = url
-  // 截断前进历史后再压入（符合真实浏览器行为）
   history.value = history.value.slice(0, histIndex.value + 1)
   history.value.push(url)
   histIndex.value = history.value.length - 1
@@ -51,16 +51,13 @@ function go(urlValue) {
   if (url.includes('news')) return openNewsHome()
   navigate('news', 'list', '新闻网', url)
 }
-
 function openNewsHome() {
   navigate('news', 'list', '新闻网', 'news.cn')
 }
-
 function doSearch(keyword) {
   navigate('news', 'list', `搜索：${keyword}`, 'news.cn')
   game.addClue('browser-search')
 }
-// 根据地址恢复视图（前进/后退用）
 function renderAddress(url) {
   const tab = active.value
   if (!tab) return
@@ -102,11 +99,29 @@ function openForum() {
   game.forumVisited = true
   game.addClue('forum-visited')
   navigate('forum', 'forum', '浅湾论坛', 'qianwan.forum')
-  showBookmarks.value = false
 }
 function gotoSite(action) {
   if (action === 'forum') openForum()
   else openNewsHome()
+}
+function openBookmark(b) {
+  if (b.action === 'forum') openForum()
+  else system.notify({ from: '浏览器', text: `正在打开 ${b.name}…` })
+}
+
+// 浏览器右上角微信快捷登录（复用微信账号密码）
+const showWxLogin = ref(false)
+const wxPwd = ref('')
+const wxErr = ref(false)
+function doWxLogin() {
+  if (wxPwd.value.trim() === '614739') {
+    game.wechatLoggedIn = true
+    showWxLogin.value = false
+    wxErr.value = false
+  } else {
+    wxErr.value = true
+    setTimeout(() => (wxErr.value = false), 1500)
+  }
 }
 </script>
 
@@ -132,15 +147,40 @@ function gotoSite(action) {
       <div class="addr">
         <span class="lock">🔒</span>
         <input v-model="address" @keyup.enter="go()" />
-        <button class="bookmark-btn" @click="showBookmarks = !showBookmarks">☆ 书签</button>
-        <div v-if="showBookmarks" class="bookmark-menu">
-          <div class="bm-title">书签栏</div>
-          <div v-for="b in bookmarks" :key="b.name" class="bm-item" @click="openForum">
-            🔖 {{ b.name }} <span class="muted">{{ b.note }}</span>
-          </div>
+      </div>
+      <div class="wx-area">
+        <button class="wx-login" @click="showWxLogin = !showWxLogin">
+          <span>💬</span>{{ game.wechatLoggedIn ? '已登录' : '微信登录' }}
+        </button>
+        <div v-if="showWxLogin" class="wx-pop">
+          <template v-if="game.wechatLoggedIn">
+            <div class="wx-ok">微信已登录</div>
+            <button class="btn" @click="showWxLogin = false">关闭</button>
+          </template>
+          <template v-else>
+            <div class="wx-pop-title">微信快捷登录</div>
+            <input v-model="wxPwd" type="password" placeholder="输入微信密码" @keyup.enter="doWxLogin" />
+            <div v-if="wxErr" class="wx-err">密码不正确</div>
+            <button class="btn btn-primary" @click="doWxLogin">登录</button>
+          </template>
         </div>
       </div>
     </div>
+
+    <!-- 书签栏：位于地址栏下方；未登录为空，登录后显示 -->
+    <div class="bookmark-bar">
+      <template v-if="game.wechatLoggedIn">
+        <span class="bm-fav-ico">⭐</span>
+        <span
+          v-for="b in bookmarks"
+          :key="b.name"
+          class="bm-item"
+          @click="openBookmark(b)"
+        >🔖 {{ b.name }}</span>
+      </template>
+      <span v-else class="bm-empty">书签栏（登录后显示）</span>
+    </div>
+
     <div class="page">
       <template v-if="active">
         <HomePage
@@ -174,16 +214,21 @@ function gotoSite(action) {
 .toolbar { height: 44px; flex: 0 0 44px; display: flex; align-items: center; gap: 4px; padding: 0 8px; border-bottom: 1px solid #e2e7e6; }
 .nav { width: 28px; height: 28px; border: 0; background: transparent; font-size: 17px; color: #5b6b73; border-radius: 4px; }
 .nav:hover { background: #eef1f0; }
-.addr { flex: 1; display: flex; align-items: center; gap: 4px; position: relative; background: #f2f5f4; border-radius: 14px; padding: 0 10px; height: 30px; }
+.addr { flex: 1; display: flex; align-items: center; gap: 4px; background: #f2f5f4; border-radius: 14px; padding: 0 10px; height: 30px; }
 .addr .lock { font-size: 11px; }
 .addr input { flex: 1; border: 0; outline: none; background: transparent; font-size: 12px; }
-.bookmark-btn { border: 0; background: transparent; font-size: 11px; color: #6b7b82; white-space: nowrap; }
-.bookmark-menu { position: absolute; right: 0; top: 36px; width: 260px; background: #fff; border: 1px solid #d5dcdb; border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 8px; z-index: 50; }
-.bm-title { font-size: 11px; color: #9aa7ab; padding: 4px 8px; }
-.bm-item { padding: 9px 8px; font-size: 12px; cursor: pointer; border-radius: 4px; }
-.bm-item:hover { background: #eef4f6; }
-.bm-item .muted { font-size: 10px; margin-left: 6px; }
+.wx-area { position: relative; }
+.wx-login { display: flex; align-items: center; gap: 5px; border: 1px solid #d5dcdb; background: #fff; border-radius: 16px; padding: 5px 12px; font-size: 12px; color: #4a5b62; white-space: nowrap; }
+.wx-login:hover { border-color: #2f6f8f; color: #2f6f8f; }
+.wx-pop { position: absolute; right: 0; top: 36px; width: 220px; background: #fff; border: 1px solid #d5dcdb; border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 14px; z-index: 60; text-align: center; }
+.wx-pop-title { font-size: 12px; margin-bottom: 10px; }
+.wx-pop input { width: 100%; padding: 7px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; margin-bottom: 8px; }
+.wx-err { color: #b23b3b; font-size: 11px; margin-bottom: 6px; }
+.wx-ok { font-size: 12px; color: #3c8a5c; margin-bottom: 10px; }
+.bookmark-bar { height: 30px; flex: 0 0 30px; display: flex; align-items: center; gap: 14px; padding: 0 12px; background: #fafbfb; border-bottom: 1px solid #eef1f0; overflow-x: auto; white-space: nowrap; }
+.bm-fav-ico { font-size: 12px; }
+.bm-item { font-size: 11px; color: #4a5b62; cursor: pointer; }
+.bm-item:hover { color: #2f6f8f; }
+.bm-empty { font-size: 11px; color: #b7c2c5; }
 .page { flex: 1; overflow: auto; }
-.blank-page { display: grid; place-items: center; align-content: center; height: 100%; gap: 8px; color: #9aa7ab; }
-.blank-logo { font-size: 46px; opacity: .5; }
 </style>

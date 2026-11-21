@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import {
   wechatSidebar, conversationList, conversations, moments, momentsCover,
-  teacherHints, favorites, wechatAccount
+  teacherHints, favorites, wechatAccount, contactApplication
 } from '@/data/wechatData'
 import { useGameStore, ANSWERS } from '@/stores/gameStore'
 import { useSystemStore } from '@/stores/systemStore'
@@ -20,8 +20,20 @@ const password = ref('')
 const loginError = ref(false)
 const showHint = ref(false)
 const hintText = ref('')
+const searchText = ref('')
 
 const conv = computed(() => conversations[activeConv.value])
+
+// 会话列表：小岛老师需先搜索添加才显示
+const visibleConversations = computed(() =>
+  conversationList.filter((c) => !c.hidden || game.teacherAdded)
+)
+
+// 红点：已读会话归零
+function unreadOf(c) {
+  return game.wechatReadConvs.includes(c.id) ? 0 : c.unread
+}
+const totalUnread = computed(() => visibleConversations.value.reduce((s, c) => s + unreadOf(c), 0))
 
 function doLogin() {
   if (password.value.trim() !== ANSWERS.wechat) {
@@ -32,12 +44,13 @@ function doLogin() {
   loggedIn.value = true
   game.wechatLoggedIn = true
   game.addClue('wechat-favorites')
-  system.notify({ from: '系统', text: '微信已登录。收藏夹里有一样东西你可能想看。' })
+  // 不再弹登录系统提示
 }
 
 function openConv(id) {
   activeConv.value = id
   activeNav.value = '聊天'
+  game.markConvRead(id)
   if (id === 'teacher') {
     showHint.value = true
     hintText.value = teacherHints.beforeAdmin[0]
@@ -46,6 +59,22 @@ function openConv(id) {
 
 function navTo(item) {
   activeNav.value = item
+}
+
+// 搜索微信号：命中风前屿则添加小岛老师为好友并开启会话
+function doSearch() {
+  const q = searchText.value.trim().toLowerCase()
+  if (!q) return
+  if ((q === contactApplication.wechatId.toLowerCase() || q.includes('风前屿')) && !game.teacherAdded) {
+    game.teacherAdded = true
+    system.notify({ from: '微信', text: '已添加「风前屿」为好友，你们开始聊天了。' })
+    searchText.value = ''
+    activeConv.value = 'teacher'
+    activeNav.value = '聊天'
+    game.markConvRead('teacher')
+  } else {
+    system.notify({ from: '微信', text: '没有找到相关用户。' })
+  }
 }
 
 // 插件发放：当玩家看过论坛、进过管理员模式、解开了日记计划后，小岛老师发来插件
@@ -78,7 +107,7 @@ function usePlugin() {
           :title="item"
           @click="navTo(item)"
         >
-          <span class="dot" v-if="item === '聊天' && conversationList.some(c => c.unread)"></span>
+          <span class="dot" v-if="item === '聊天' && totalUnread > 0"></span>
           {{ item.slice(0, 2) }}
         </button>
       </div>
@@ -87,10 +116,13 @@ function usePlugin() {
 
     <section class="list-pane">
       <template v-if="activeNav === '聊天'">
-        <div class="search">🔍 搜索</div>
+        <div class="search-box">
+          <input v-model="searchText" placeholder="搜索微信号" @keyup.enter="doSearch" />
+          <button @click="doSearch">搜索</button>
+        </div>
         <div class="conv-list">
           <div
-            v-for="c in conversationList"
+            v-for="c in visibleConversations"
             :key="c.id"
             class="conv"
             :class="{ active: activeConv === c.id }"
@@ -104,9 +136,12 @@ function usePlugin() {
               </div>
               <div class="conv-preview">{{ c.preview }}</div>
             </div>
-            <span class="badge" v-if="c.unread">{{ c.unread }}</span>
+            <span class="badge" v-if="unreadOf(c)">{{ unreadOf(c) }}</span>
           </div>
         </div>
+      </template>
+      <template v-else-if="activeNav === '通讯录'">
+        <Contacts @add-teacher="game.teacherAdded = true" />
       </template>
       <div v-else class="pane-title">{{ activeNav }}</div>
     </section>
@@ -115,7 +150,6 @@ function usePlugin() {
       <ChatWindow v-if="activeNav === '聊天'" :conv="conv" :conv-name="conv ? conv.name : ''" />
       <Moments v-else-if="activeNav === '朋友圈'" :moments="moments" :cover="momentsCover" />
       <Favorites v-else-if="activeNav === '收藏'" :items="favorites" />
-      <Contacts v-else-if="activeNav === '通讯录'" />
       <div v-else class="placeholder">{{ activeNav }}（占位）</div>
     </main>
 
@@ -161,7 +195,9 @@ function usePlugin() {
 .dot { position: absolute; top: 5px; right: 14px; width: 6px; height: 6px; border-radius: 50%; background: #e05353; }
 .rail-bottom { padding: 12px; font-size: 16px; color: #9fb0b6; }
 .list-pane { width: 258px; flex: 0 0 258px; background: #e9edec; border-right: 1px solid #d5dcdb; display: flex; flex-direction: column; }
-.search { margin: 12px; padding: 7px 10px; background: #fff; border-radius: 4px; font-size: 12px; color: #9aa7ab; }
+.search-box { display: flex; gap: 4px; margin: 10px; }
+.search-box input { flex: 1; min-width: 0; padding: 6px 8px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; }
+.search-box button { border: 1px solid #c4cfd0; background: #fff; border-radius: 4px; font-size: 11px; padding: 0 8px; color: #4a5b62; }
 .pane-title { padding: 16px; font-size: 14px; font-weight: 500; }
 .conv-list { overflow: auto; flex: 1; }
 .conv { display: flex; gap: 10px; padding: 11px 12px; cursor: pointer; align-items: center; position: relative; }

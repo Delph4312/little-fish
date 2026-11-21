@@ -1,8 +1,43 @@
 <script setup>
+import { reactive, ref } from 'vue'
+import { useGameStore } from '@/stores/gameStore'
+
 defineProps({
   moments: { type: Array, default: () => [] },
   cover: { type: String, default: '' }
 })
+const game = useGameStore()
+
+// 每条动态的点赞状态（是否已点赞）与追加评论
+const liked = reactive({})
+const extraComments = reactive({})
+const commentOpen = ref(null)
+const commentText = ref('')
+
+function toggleLike(i) {
+  liked[i] = !liked[i]
+}
+
+function openComment(i) {
+  commentOpen.value = i
+  commentText.value = ''
+}
+
+function sendComment(i) {
+  const text = commentText.value.trim()
+  if (!text) return
+  if (!extraComments[i]) extraComments[i] = []
+  extraComments[i].push({ user: '谢遥', text })
+  commentText.value = ''
+  commentOpen.value = null
+}
+
+// 显示点赞名单：原始 + 我（谢遥）点赞时追加
+function displayLikes(m, i) {
+  const arr = [...(m.likes || [])]
+  if (liked[i]) arr.push('谢遥')
+  return arr
+}
 </script>
 
 <template>
@@ -23,10 +58,19 @@ defineProps({
           <div class="m-meta">
             <span>{{ m.time }}</span>
             <span v-if="m.visibility" class="vis">{{ m.visibility }}</span>
+            <span class="m-actions">
+              <span class="act" @click="toggleLike(i)">♡ 赞</span>
+              <span class="act" @click="openComment(i)">💬 评论</span>
+            </span>
           </div>
-          <div v-if="m.likes && m.likes.length" class="m-likes">♡ {{ m.likes.join('、') }}</div>
-          <div v-if="m.comments && m.comments.length" class="m-comments">
-            <div v-for="(c, k) in m.comments" :key="k"><b>{{ c.user }}：</b>{{ c.text }}</div>
+          <div v-if="displayLikes(m, i).length" class="m-likes">♡ {{ displayLikes(m, i).join('、') }}</div>
+          <div v-if="(m.comments && m.comments.length) || (extraComments[i] && extraComments[i].length)" class="m-comments">
+            <div v-for="(c, k) in m.comments || []" :key="'o'+k"><b>{{ c.user }}：</b>{{ c.text }}</div>
+            <div v-for="(c, k) in extraComments[i] || []" :key="'e'+k"><b>{{ c.user }}：</b>{{ c.text }}</div>
+          </div>
+          <div v-if="commentOpen === i" class="comment-box">
+            <input v-model="commentText" placeholder="评论…" @keyup.enter="sendComment(i)" />
+            <button class="btn" @click="sendComment(i)">发送</button>
           </div>
         </div>
       </div>
@@ -48,9 +92,15 @@ defineProps({
 .m-text { font-size: 13px; line-height: 1.7; }
 .m-images { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 .m-img { width: 110px; height: 82px; border-radius: 3px; background: linear-gradient(135deg, #a9c0c6, #e0ccae); display: grid; place-items: center; font-size: 10px; color: #3f5964; text-align: center; padding: 4px; }
-.m-meta { display: flex; gap: 12px; color: #9aa7ab; font-size: 11px; margin-top: 8px; }
+.m-meta { display: flex; gap: 12px; color: #9aa7ab; font-size: 11px; margin-top: 8px; align-items: center; }
 .vis { color: #8c9a9e; }
+.m-actions { margin-left: auto; display: flex; gap: 10px; }
+.act { cursor: pointer; color: #6b7b82; }
+.act:hover { color: #2f6f8f; }
 .m-likes { margin-top: 8px; background: #e3e8ea; padding: 6px 10px; font-size: 12px; color: #4a6d8c; border-radius: 3px; }
 .m-comments { margin-top: 6px; background: #e3e8ea; padding: 8px 10px; font-size: 12px; line-height: 1.7; border-radius: 3px; }
 .m-comments b { color: #4a6d8c; font-weight: 500; }
+.comment-box { display: flex; gap: 6px; margin-top: 8px; }
+.comment-box input { flex: 1; padding: 6px 8px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; }
+.comment-box .btn { padding: 5px 12px; font-size: 12px; }
 </style>

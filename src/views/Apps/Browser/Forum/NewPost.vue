@@ -12,6 +12,14 @@ const title = ref('')
 const section = ref('闲聊')
 const content = ref('')
 
+// 基础格式按钮：在光标处包裹标记
+function wrap(before, after) {
+  content.value += before + after
+}
+function attach() {
+  content.value += '\n[附件：文件]'
+}
+
 function publish() {
   if (!game.wechatLoggedIn) {
     system.notify({ from: '浅湾论坛', text: '请先登录微信，才能发帖。' })
@@ -58,7 +66,15 @@ function publish() {
           >{{ s }}</button>
         </div>
         <label>正文</label>
-        <textarea v-model="content" placeholder="写点什么……"></textarea>
+        <div class="editor">
+          <div class="editor-toolbar">
+            <button type="button" title="加粗" @click="wrap('**', '**')"><b>B</b></button>
+            <button type="button" title="斜体" @click="wrap('*', '*')"><i>I</i></button>
+            <button type="button" title="附件" @click="attach">📎 附件</button>
+            <span class="tool-hint">基础格式</span>
+          </div>
+          <textarea v-model="content" placeholder="写点什么……"></textarea>
+        </div>
         <div class="actions">
           <button class="btn" @click="emit('back')">取消</button>
           <button class="btn btn-primary" @click="publish">发表</button>
@@ -78,7 +94,12 @@ label { display: block; font-size: 13px; font-weight: 500; margin: 16px 0 8px; }
 .sections { display: flex; gap: 8px; }
 .sections button { padding: 6px 14px; border: 1px solid #d5dcdb; background: #fff; border-radius: 4px; font-size: 12px; }
 .sections button.active { background: #2f6f8f; color: #fff; border-color: #2f6f8f; }
-.form textarea { width: 100%; height: 180px; resize: vertical; border: 1px solid #d5dcdb; border-radius: 4px; padding: 10px; font-size: 13px; line-height: 1.7; }
+.editor { border: 1px solid #d5dcdb; border-radius: 4px; overflow: hidden; }
+.editor-toolbar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: #f4f6f6; border-bottom: 1px solid #d5dcdb; }
+.editor-toolbar button { border: 1px solid #d5dcdb; background: #fff; border-radius: 3px; padding: 3px 9px; font-size: 12px; }
+.editor-toolbar button:hover { background: #e6eef1; }
+.tool-hint { margin-left: auto; font-size: 10px; color: #a5b0b3; }
+.editor textarea { width: 100%; height: 180px; resize: vertical; border: 0; padding: 10px; font-size: 13px; line-height: 1.7; outline: none; }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 .need-login { text-align: center; padding: 60px 20px; color: #6b7b82; font-size: 13px; }
 .need-login .btn { display: block; margin: 20px auto 0; }

@@ -1,16 +1,15 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import { useSystemStore } from '@/stores/systemStore'
 
 const props = defineProps({ post: { type: Object, default: null } })
-const emit = defineEmits(['back'])
+const emit = defineEmits(['back', 'open-profile'])
 const game = useGameStore()
 const system = useSystemStore()
 
 const input = ref('')
 
-// 文案里的评论 + 玩家自己发的评论
 const allComments = computed(() => {
   if (!props.post) return []
   const mine = game.userComments[props.post.id] || []
@@ -20,16 +19,55 @@ const allComments = computed(() => {
 function postComment() {
   const text = input.value.trim()
   if (!text) return
-  if (!game.wechatLoggedIn) {
-    system.notify({ from: '浅湾论坛', text: '请先登录微信，才能发言。' })
+  if (!game.forumLoggedIn) {
+    system.notify({ from: '浅湾论坛', text: '请先登录论坛，才能发言。' })
     return
   }
   if (!game.userComments[props.post.id]) game.userComments[props.post.id] = []
-  game.userComments[props.post.id].push({
-    user: '你', text, time: '刚刚', mine: true
-  })
+  game.userComments[props.post.id].push({ user: '谢遥', text, time: '刚刚', mine: true })
   input.value = ''
   system.notify({ from: '浅湾论坛', text: '回复已发布。' })
+}
+
+// 帖子点赞
+const postLiked = computed({
+  get: () => game.likedPosts?.includes?.(props.post?.id) || false,
+  set: () => {}
+})
+function togglePostLike() {
+  if (!game.likedPosts) game.likedPosts = []
+  const i = game.likedPosts.indexOf(props.post.id)
+  if (i >= 0) game.likedPosts.splice(i, 1)
+  else game.likedPosts.push(props.post.id)
+}
+
+// 评论点赞与回复
+const likedComments = reactive({})
+function toggleCommentLike(i) {
+  likedComments[i] = !likedComments[i]
+}
+const replyTo = ref(null)
+const replyText = ref('')
+function openReply(i) {
+  replyTo.value = i
+  replyText.value = ''
+}
+function sendReply(i) {
+  const text = replyText.value.trim()
+  if (!text) return
+  if (!game.forumLoggedIn) {
+    system.notify({ from: '浅湾论坛', text: '请先登录论坛。' })
+    return
+  }
+  if (!game.userComments[props.post.id]) game.userComments[props.post.id] = []
+  game.userComments[props.post.id].push({ user: '谢遥', text: `回复 ${allComments.value[i]?.user || ''}：${text}`, time: '刚刚', mine: true })
+  replyText.value = ''
+  replyTo.value = null
+}
+
+// 可点击跳转主页的评论者
+function isLinkUser(name) {
+  return ['小岛老师', '鲸鱼先生', '谢遥'].includes(name)
 }
 </script>
 
@@ -40,17 +78,39 @@ function postComment() {
       <h1>{{ post.title }}</h1>
       <div class="meta">楼主：{{ post.author }} · 发表于 {{ post.time }}</div>
       <p v-for="(line, i) in post.content" :key="i" class="para">{{ line }}</p>
-      <div class="stats">回复 {{ post.replies + (game.userComments[post.id]?.length || 0) }} · 点赞 {{ post.likes }}</div>
+      <div class="stats">
+        <span class="act" :class="{ on: postLiked }" @click="togglePostLike">
+          👍 {{ post.likes + (postLiked ? 1 : 0) }}
+        </span>
+        <span>💬 回复 {{ post.replies + (game.userComments[post.id]?.length || 0) }}</span>
+      </div>
       <div class="comments">
         <div class="c-title">评论区</div>
         <div v-for="(c, i) in allComments" :key="i" class="comment" :class="{ mine: c.mine }">
-          <b>@{{ c.user }}：</b>{{ c.text }}
-          <span v-if="c.time" class="c-time">{{ c.time }}</span>
+          <div class="c-head">
+            <b
+              class="c-user"
+              :class="{ link: isLinkUser(c.user) }"
+              @click="isLinkUser(c.user) && emit('open-profile', c.user)"
+            >{{ c.user }}</b>
+            <span v-if="c.time" class="c-time">{{ c.time }}</span>
+          </div>
+          <div class="c-text">{{ c.text }}</div>
+          <div class="c-actions">
+            <span class="act" :class="{ on: likedComments[i] }" @click="toggleCommentLike(i)">
+              👍 {{ c.likes || 0 }}<span v-if="likedComments[i]">+1</span>
+            </span>
+            <span class="act" @click="openReply(i)">💬 回复</span>
+          </div>
+          <div v-if="replyTo === i" class="reply-box">
+            <input v-model="replyText" placeholder="回复…" @keyup.enter="sendReply(i)" />
+            <button class="btn" @click="sendReply(i)">发送</button>
+          </div>
         </div>
       </div>
 
       <div class="composer">
-        <div v-if="!game.wechatLoggedIn" class="need-login" @click="system.notify({ from: '浅湾论坛', text: '请先登录微信，才能发言。' })">
+        <div v-if="!game.forumLoggedIn" class="need-login" @click="system.notify({ from: '浅湾论坛', text: '请先登录论坛。' })">
           登录后参与讨论 →
         </div>
         <template v-else>
@@ -73,13 +133,23 @@ function postComment() {
 h1 { font-size: 20px; font-weight: 600; line-height: 1.5; margin: 0 0 10px; }
 .meta { font-size: 12px; color: #a5b0b3; margin-bottom: 22px; }
 .para { font-size: 14px; line-height: 2; color: #2b373d; margin: 0 0 14px; }
-.stats { font-size: 11px; color: #a5b0b3; padding: 14px 0; border-top: 1px solid #eef1f0; border-bottom: 1px solid #eef1f0; }
+.stats { font-size: 12px; color: #5b6b73; padding: 14px 0; border-top: 1px solid #eef1f0; border-bottom: 1px solid #eef1f0; display: flex; gap: 20px; }
+.act { cursor: pointer; }
+.act:hover, .act.on { color: #2f6f8f; }
 .comments { padding-top: 8px; }
 .c-title { font-size: 14px; font-weight: 500; padding: 12px 0; }
-.comment { font-size: 13px; line-height: 1.8; padding: 10px 12px; background: #f6f8f8; border-radius: 4px; margin-bottom: 8px; }
+.comment { font-size: 13px; line-height: 1.8; padding: 12px; background: #f6f8f8; border-radius: 4px; margin-bottom: 8px; }
 .comment.mine { background: #e4f0ea; }
-.comment b { color: #4a6d8c; font-weight: 500; }
-.c-time { font-size: 10px; color: #a5b0b3; margin-left: 8px; }
+.c-head { display: flex; align-items: center; gap: 8px; }
+.c-user { font-weight: 500; color: #4a6d8c; }
+.c-user.link { cursor: pointer; color: #2f6f8f; }
+.c-user.link:hover { text-decoration: underline; }
+.c-time { font-size: 10px; color: #a5b0b3; margin-left: auto; }
+.c-text { margin: 2px 0 6px; }
+.c-actions { display: flex; gap: 16px; font-size: 11px; color: #9aa7ab; }
+.reply-box { display: flex; gap: 6px; margin-top: 8px; }
+.reply-box input { flex: 1; padding: 6px 8px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; }
+.reply-box .btn { padding: 5px 12px; font-size: 12px; }
 .composer { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid #eef1f0; }
 .composer textarea { width: 100%; height: 72px; resize: vertical; border: 1px solid #d5dcdb; border-radius: 4px; padding: 9px; font-size: 13px; }
 .composer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }

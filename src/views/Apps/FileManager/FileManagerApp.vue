@@ -92,8 +92,8 @@ function openDrive(d) {
 }
 
 function openFolder(f) {
+  // 只有可进入的文件夹有响应；其余为普通文件夹、不可选（点击无任何反应）
   if (f.open && f.to) goLocation(f.to)
-  else showToast(`无法打开“${f.name}”：该文件夹为空或拒绝访问。`)
 }
 
 function openFile(f) {
@@ -188,10 +188,10 @@ onUnmounted(() => clearTimeout(toastTimer))
               v-for="f in currentFolders"
               :key="f.name"
               class="folder"
-              :class="{ locked: !f.open }"
+              :class="{ selectable: f.open }"
               @dblclick="openFolder(f)"
             >
-              <div class="folder-icon">{{ f.open ? '📁' : '🔒' }}</div>
+              <div class="folder-icon">📁</div>
               <div>{{ f.name }}</div>
             </div>
           </div>
@@ -256,9 +256,9 @@ onUnmounted(() => clearTimeout(toastTimer))
 .drive-bar i { display: block; height: 100%; background: #5f93a8; }
 .drive-free { font-size: 10px; color: #9aa7ab; margin-top: 6px; }
 .folder-grid { display: flex; flex-wrap: wrap; gap: 16px; padding-bottom: 14px; border-bottom: 1px solid #eef1f0; }
-.folder { width: 84px; text-align: center; font-size: 11px; cursor: pointer; padding: 6px; border-radius: 4px; word-break: break-all; }
-.folder:hover { background: #f0f5f5; }
-.folder.locked { color: #96a2a6; }
+.folder { width: 84px; text-align: center; font-size: 11px; padding: 6px; border-radius: 4px; word-break: break-all; user-select: none; }
+.folder.selectable { cursor: pointer; }
+.folder.selectable:hover { background: #f0f5f5; }
 .folder-icon { font-size: 34px; }
 .file-grid { display: flex; flex-wrap: wrap; gap: 12px; }
 .file { width: 96px; text-align: center; font-size: 11px; padding: 8px 4px; border-radius: 4px; cursor: pointer; }

@@ -12,12 +12,14 @@ export const wechatAccount = {
 }
 
 // 左侧会话列表（顺序即微信里的排列）
+// teacher（小岛老师/风前屿）初始不出现，玩家搜索微信号添加后才显示，由 game.teacherAdded 控制。
+// unread 为该会话真实未读条数：姐姐最新2条、班群4条，点击会话后归零（由 game.wechatReadConvs 控制）。
 export const conversationList = [
   { id: 'sister', name: '姐姐', avatarText: '晴', preview: '不要想不开，快回我消息。', time: '14:30', unread: 2 },
   { id: 'dad', name: '爸爸', avatarText: '爸', preview: '爸爸，妈妈，我好想你们……', time: '昨天', unread: 0 },
   { id: 'mom', name: '妈妈', avatarText: '妈', preview: '爸爸，妈妈，我好想你们……', time: '昨天', unread: 0 },
-  { id: 'class', name: '高三（3）班群', avatarText: '班', preview: '谢遥看到回我。', time: '14:20', unread: 1 },
-  { id: 'teacher', name: '小岛老师', avatarText: '屿', preview: '如果遇到卡住的地方，可以来问我。', time: '15:12', unread: 0 },
+  { id: 'class', name: '高三（3）班群', avatarText: '班', preview: '谢遥看到回我。', time: '14:20', unread: 4 },
+  { id: 'teacher', name: '小岛老师', avatarText: '屿', preview: '如果遇到卡住的地方，可以来问我。', time: '15:12', unread: 0, hidden: true },
   { id: 'filehelper', name: '文件传输助手', avatarText: '文', preview: '', time: '', unread: 0 }
 ]
 
@@ -108,7 +110,12 @@ export const conversations = {
 
   filehelper: {
     name: '文件传输助手',
-    messages: []
+    messages: [
+      { t: '今天 15:20' },
+      { from: 'other', type: 'text', text: '新闻网账号：搁浅' },
+      { from: 'other', type: 'text', text: '密码：gq7Kp2m' },
+      { from: 'other', type: 'text', text: '（这是你自己记在这里的，别忘了。）' }
+    ]
   }
 }
 
@@ -170,7 +177,7 @@ export const contactApplication = {
 // 小岛老师卡关提示（按触发节点索引）
 export const teacherHints = {
   beforeForum: [
-    '论坛在浏览器书签里，最后一个。你弟的号还登着，直接点进去。',
+    '论坛在浏览器书签栏里，登录后能看到。找到「浅湾论坛」点进去。',
     '别从搜索进，搜索页有假站。鲸鱼先生做过好几个镜像。'
   ],
   beforeAdmin: [
@@ -199,15 +206,8 @@ export const pluginDialogue = [
   '时间一到，论坛就会彻底断连，机会仅此一次，你要把握好。'
 ]
 
-// 收藏夹：车祸报道（微信登录后可见）
-export const favorites = [
-  {
-    id: 'crash-report',
-    title: '车祸之后：一个家庭的赔偿与沉默',
-    source: '本地新闻 · 去年12月',
-    summary: '去年11月25日晚，本市城郊路段发生一起酒驾肇事逃逸案。一辆黑色轿车撞倒两名行人后逃离现场，伤者送医后抢救无效死亡。据悉，两名死者系夫妻，当晚正从外地返家。肇事车辆于次日凌晨被找到，车内人员为三男两女，均为未成年人，事发前曾饮酒。案件审理期间，肇事者家属赔偿死者家属大额款项。不久后，肇事者获假释出狱。死者留下一对子女，姐姐刚上大学，弟弟在读高中。',
-    clue: '弟弟对车祸抱有长期执念与仇恨'
-  }
-]
+// 微信收藏夹：车祸报道已移至「浏览器→新闻网→微信登录后的账号收藏夹」，此处不再显示。
+export const favorites = []
 
-export const wechatSidebar = ['聊天', '通讯录', '收藏', '文件', '朋友圈']
+// 去掉「文件」页
+export const wechatSidebar = ['聊天', '通讯录', '收藏', '朋友圈']

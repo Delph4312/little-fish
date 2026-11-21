@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { useSystemStore } from '@/stores/systemStore'
 
 const props = defineProps({
@@ -8,6 +8,7 @@ const props = defineProps({
 
 const system = useSystemStore()
 const isActive = computed(() => system.activeWindowId === props.win.id)
+const resizing = ref(false)
 
 const registry = {
   wechat: defineAsyncComponent(() => import('@/views/Apps/WeChat/WeChatApp.vue')),
@@ -33,12 +34,12 @@ function onBarMousedown(e) {
   if (e.button !== 0 || props.win.maximized) return
   if (e.target.closest('.window-controls')) return
   system.focusWindow(props.win.id)
-  let lastX = e.clientX
-  let lastY = e.clientY
+  const startX = e.clientX
+  const startY = e.clientY
+  const origin = { x: props.win.x, y: props.win.y }
   function onMove(ev) {
-    system.moveWindow(props.win.id, ev.clientX - lastX, ev.clientY - lastY)
-    lastX = ev.clientX
-    lastY = ev.clientY
+    props.win.x = Math.max(0, origin.x + (ev.clientX - startX))
+    props.win.y = Math.max(0, origin.y + (ev.clientY - startY))
   }
   function onUp() {
     window.removeEventListener('mousemove', onMove)
@@ -50,32 +51,50 @@ function onBarMousedown(e) {
   window.addEventListener('mouseup', onUp)
 }
 
-// 边缘/角落缩放：dir 组合包含 left/top 表示向左或向上拉
+// 边缘/角落缩放：dir 含 l/t 表示向左/上拉伸
 function onResizeMousedown(e, dir) {
   if (e.button !== 0 || props.win.maximized) return
   e.stopPropagation()
+  e.preventDefault()
   system.focusWindow(props.win.id)
+  resizing.value = true
   const startX = e.clientX
   const startY = e.clientY
-  const start = { w: props.win.w, h: props.win.h }
+  const start = { x: props.win.x, y: props.win.y, w: props.win.w, h: props.win.h }
+  const minW = 420
+  const minH = 300
   const left = dir.includes('l')
   const top = dir.includes('t')
+  const right = dir.includes('r')
+  const bottom = dir.includes('b')
+
   function onMove(ev) {
     const dx = ev.clientX - startX
     const dy = ev.clientY - startY
-    system.resizeWindow(props.win.id, {
-      dx,
-      dy,
-      dw: dir.includes('r') ? dx : 0,
-      dh: dir.includes('b') ? dy : 0,
-      left,
-      top
-    })
+    let { x, y, w, h } = start
+    if (right) w = Math.max(minW, start.w + dx)
+    if (bottom) h = Math.max(minH, start.h + dy)
+    if (left) {
+      const newW = Math.max(minW, start.w - dx)
+      x = start.x + (start.w - newW)
+      w = newW
+    }
+    if (top) {
+      const newH = Math.max(minH, start.h - dy)
+      y = start.y + (start.h - newH)
+      h = newH
+    }
+    props.win.x = Math.max(0, x)
+    props.win.y = Math.max(0, y)
+    props.win.w = w
+    props.win.h = h
   }
   function onUp() {
+    resizing.value = false
     window.removeEventListener('mousemove', onMove)
     window.removeEventListener('mouseup', onUp)
     document.body.style.userSelect = ''
+    document.body.style.cursor = ''
   }
   document.body.style.userSelect = 'none'
   window.addEventListener('mousemove', onMove)
@@ -86,7 +105,7 @@ function onResizeMousedown(e, dir) {
 <template>
   <div
     class="window"
-    :class="{ active: isActive, maximized: win.maximized }"
+    :class="{ active: isActive, maximized: win.maximized, resizing }"
     :style="style"
     @mousedown="system.focusWindow(win.id)"
   >
@@ -108,7 +127,7 @@ function onResizeMousedown(e, dir) {
       <div v-else class="center" style="height:100%;color:#8a979c">应用尚未实现：{{ win.app }}</div>
     </div>
 
-    <!-- 8 方向缩放手柄 -->
+    <!-- 8 方向缩放手柄（加宽命中区；最大化时隐藏） -->
     <template v-if="!win.maximized">
       <div class="rs rs-n" @mousedown="onResizeMousedown($event, 'n')"></div>
       <div class="rs rs-s" @mousedown="onResizeMousedown($event, 's')"></div>
@@ -117,13 +136,12 @@ function onResizeMousedown(e, dir) {
       <div class="rs rs-nw" @mousedown="onResizeMousedown($event, 'nw')"></div>
       <div class="rs rs-ne" @mousedown="onResizeMousedown($event, 'ne')"></div>
       <div class="rs rs-sw" @mousedown="onResizeMousedown($event, 'sw')"></div>
-      <div class="rs rs-se" @mousedown="onResizeMousedown($event, 'se')"></div>
+      <div class="rs rs-se" @mousedown="onResizeMousedown($event, 'se')"><i></i></div>
     </template>
   </div>
 </template>
 
 <style scoped>
-/* 最大化时禁用内联定位，交由全局 .window.maximized 控制 */
 .window.maximized {
   left: 0 !important;
   top: 0 !important;
@@ -131,18 +149,23 @@ function onResizeMousedown(e, dir) {
   height: 100% !important;
   border-radius: 0;
 }
-
-/* 缩放手柄 */
-.rs { position: absolute; z-index: 5; }
-.rs-n, .rs-s { left: 8px; right: 8px; height: 5px; cursor: ns-resize; }
-.rs-n { top: 0; }
-.rs-s { bottom: 0; }
-.rs-w, .rs-e { top: 8px; bottom: 8px; width: 5px; cursor: ew-resize; }
-.rs-w { left: 0; }
-.rs-e { right: 0; }
-.rs-nw, .rs-ne, .rs-sw, .rs-se { width: 12px; height: 12px; }
-.rs-nw { top: 0; left: 0; cursor: nwse-resize; }
-.rs-ne { top: 0; right: 0; cursor: nesw-resize; }
-.rs-sw { bottom: 0; left: 0; cursor: nesw-resize; }
-.rs-se { bottom: 0; right: 0; cursor: nwse-resize; }
+.rs { position: absolute; z-index: 30; }
+.rs-n, .rs-s { left: 10px; right: 10px; height: 8px; cursor: ns-resize; }
+.rs-n { top: -2px; }
+.rs-s { bottom: -2px; }
+.rs-w, .rs-e { top: 10px; bottom: 10px; width: 8px; cursor: ew-resize; }
+.rs-w { left: -2px; }
+.rs-e { right: -2px; }
+.rs-nw, .rs-ne, .rs-sw, .rs-se { width: 18px; height: 18px; }
+.rs-nw { top: -3px; left: -3px; cursor: nwse-resize; }
+.rs-ne { top: -3px; right: -3px; cursor: nesw-resize; }
+.rs-sw { bottom: -3px; left: -3px; cursor: nesw-resize; }
+.rs-se { bottom: -3px; right: -3px; cursor: nwse-resize; }
+/* 右下角明显的拖拽斜纹标识 */
+.rs-se i {
+  position: absolute; right: 3px; bottom: 3px;
+  width: 12px; height: 12px;
+  background: repeating-linear-gradient(135deg, transparent 0 3px, rgba(90,110,120,.65) 3px 5px);
+  border-radius: 2px;
+}
 </style>

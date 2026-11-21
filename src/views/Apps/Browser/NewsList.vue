@@ -1,8 +1,10 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { crashReport } from '@/data/newsData'
+import { ANSWERS } from '@/stores/gameStore'
 import { useGameStore } from '@/stores/gameStore'
 
-defineProps({
+const props = defineProps({
   news: { type: Array, default: () => [] },
   nav: { type: Array, default: () => [] }
 })
@@ -10,16 +12,27 @@ const emit = defineEmits(['open'])
 const game = useGameStore()
 
 const activeNav = ref('首页')
-const loginTip = ref(false)
+const showLogin = ref(false)
+const username = ref('')
+const password = ref('')
+const loginErr = ref(false)
 
-function handleLogin() {
-  if (game.wechatLoggedIn) {
-    loginTip.value = true
-    setTimeout(() => (loginTip.value = false), 2000)
+const isLoggedIn = computed(() => game.newsLoggedIn)
+
+function doLogin() {
+  if (username.value.trim() === ANSWERS.newsUsername && password.value.trim() === ANSWERS.newsPassword) {
+    game.newsLoggedIn = true
+    game.addClue('news-login')
+    showLogin.value = false
+    loginErr.value = false
   } else {
-    loginTip.value = true
-    setTimeout(() => (loginTip.value = false), 2600)
+    loginErr.value = true
+    setTimeout(() => (loginErr.value = false), 1600)
   }
+}
+
+function selectNav(n) {
+  activeNav.value = n
 }
 </script>
 
@@ -37,13 +50,17 @@ function handleLogin() {
         <button>搜索</button>
       </div>
       <div class="login-area">
-        <div v-if="loginTip" class="login-tip">
-          {{ game.wechatLoggedIn ? '已使用微信登录' : '请先在微信中登录' }}
+        <button class="login-btn" v-if="!isLoggedIn" @click="showLogin = !showLogin">登录</button>
+        <div class="logged" v-else>
+          <span class="logged-av">搁</span> {{ ANSWERS.newsUsername }}
         </div>
-        <button class="wx-login" @click="handleLogin">
-          <span class="wx-ico">💬</span>
-          {{ game.wechatLoggedIn ? '已登录' : '微信登录' }}
-        </button>
+        <div v-if="showLogin && !isLoggedIn" class="login-pop">
+          <div class="lp-title">账号登录</div>
+          <input v-model="username" placeholder="用户名" />
+          <input v-model="password" type="password" placeholder="密码" @keyup.enter="doLogin" />
+          <div v-if="loginErr" class="lp-err">用户名或密码不正确</div>
+          <button class="btn btn-primary" @click="doLogin">登录</button>
+        </div>
       </div>
     </header>
 
@@ -56,34 +73,62 @@ function handleLogin() {
           :key="n"
           class="side-item"
           :class="{ active: activeNav === n }"
-          @click="activeNav = n"
+          @click="selectNav(n)"
         >
           <span class="side-dot"></span>{{ n }}
+        </div>
+        <div class="side-head" style="margin-top:14px" v-if="isLoggedIn">我的</div>
+        <div
+          v-if="isLoggedIn"
+          class="side-item"
+          :class="{ active: activeNav === '我的收藏' }"
+          @click="selectNav('我的收藏')"
+        >
+          <span class="side-dot"></span>⭐ 我的收藏
         </div>
         <div class="side-foot">新闻热线 · 12345</div>
       </aside>
 
       <!-- 内容区 -->
       <main class="content">
-        <div class="content-head">
-          <h2>{{ activeNav }}</h2>
-          <span class="date">2026年11月 · 今日更新 {{ news.length }} 条</span>
-        </div>
-        <div class="list">
-          <div v-for="item in news" :key="item.id" class="item" @click="emit('open', item.id)">
-            <div class="thumb"></div>
-            <div class="item-body">
-              <div class="item-title">{{ item.title }}</div>
-              <div class="item-summary">{{ item.summary }}</div>
-              <div class="item-meta">
-                <span class="cat">{{ item.category }}</span>
-                <span>{{ item.time }}</span>
-                <span class="comments">💬 {{ item.commentCount }}</span>
+        <!-- 我的收藏 -->
+        <template v-if="activeNav === '我的收藏' && isLoggedIn">
+          <div class="content-head">
+            <h2>我的收藏</h2>
+            <span class="date">{{ 1 }} 篇文章</span>
+          </div>
+          <div class="fav-card" @click="emit('open', crashReport.id)">
+            <div class="fav-thumb"></div>
+            <div class="fav-body">
+              <div class="fav-title">{{ crashReport.title }}</div>
+              <div class="fav-summary">{{ crashReport.paragraphs[0] }}</div>
+              <div class="fav-meta">{{ crashReport.category }} · {{ crashReport.time }} · 收藏于 去年12月</div>
+            </div>
+          </div>
+        </template>
+
+        <!-- 新闻列表 -->
+        <template v-else>
+          <div class="content-head">
+            <h2>{{ activeNav }}</h2>
+            <span class="date">2026年11月 · 今日更新 {{ news.length }} 条</span>
+          </div>
+          <div class="list">
+            <div v-for="item in news" :key="item.id" class="item" @click="emit('open', item.id)">
+              <div class="thumb"></div>
+              <div class="item-body">
+                <div class="item-title">{{ item.title }}</div>
+                <div class="item-summary">{{ item.summary }}</div>
+                <div class="item-meta">
+                  <span class="cat">{{ item.category }}</span>
+                  <span>{{ item.time }}</span>
+                  <span class="comments">💬 {{ item.commentCount }}</span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="pager">上一页 &nbsp; <b>1</b> &nbsp; 2 &nbsp; 3 &nbsp; 下一页</div>
+          <div class="pager">上一页 &nbsp; <b>1</b> &nbsp; 2 &nbsp; 3 &nbsp; 下一页</div>
+        </template>
       </main>
     </div>
   </div>
@@ -91,48 +136,27 @@ function handleLogin() {
 
 <style scoped>
 .news-list { background: #fff; min-height: 100%; color: var(--ink); }
-.site-header {
-  height: 58px; display: flex; align-items: center; gap: 20px;
-  padding: 0 20px; border-bottom: 2px solid #2f6f8f; background: #fff;
-}
+.site-header { position: relative; height: 58px; display: flex; align-items: center; gap: 20px; padding: 0 20px; border-bottom: 2px solid #2f6f8f; background: #fff; }
 .brand { display: flex; align-items: center; gap: 8px; }
-.brand-mark {
-  width: 30px; height: 30px; border-radius: 6px;
-  background: #2f6f8f; color: #fff; font-size: 17px; font-weight: 600;
-  display: grid; place-items: center;
-}
+.brand-mark { width: 30px; height: 30px; border-radius: 6px; background: #2f6f8f; color: #fff; font-size: 17px; font-weight: 600; display: grid; place-items: center; }
 .brand-name { font-size: 19px; font-weight: 600; color: #2f6f8f; }
 .brand-slogan { font-size: 11px; color: #9aa7ab; margin-left: 4px; }
 .site-search { flex: 1; display: flex; max-width: 380px; margin-left: 20px; }
 .site-search input { flex: 1; padding: 7px 10px; border: 1px solid #d5dcdb; border-radius: 3px 0 0 3px; font-size: 12px; }
 .site-search button { padding: 7px 14px; border: 1px solid #2f6f8f; background: #2f6f8f; color: #fff; border-radius: 0 3px 3px 0; font-size: 12px; }
-.login-area { margin-left: auto; position: relative; display: flex; align-items: center; gap: 8px; }
-.wx-login {
-  display: flex; align-items: center; gap: 6px;
-  border: 1px solid #d5dcdb; background: #fff; color: #4a5b62;
-  padding: 6px 12px; border-radius: 18px; font-size: 12px;
-}
-.wx-login:hover { border-color: #2f6f8f; color: #2f6f8f; }
-.wx-ico { font-size: 14px; }
-.login-tip {
-  position: absolute; right: 0; top: 38px; z-index: 40;
-  background: #2c3e46; color: #fff; font-size: 11px;
-  padding: 7px 12px; border-radius: 5px; white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0,0,0,.2);
-}
+.login-area { margin-left: auto; position: relative; }
+.login-btn { border: 1px solid #2f6f8f; background: #2f6f8f; color: #fff; padding: 6px 16px; border-radius: 18px; font-size: 12px; }
+.logged { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #4a5b62; }
+.logged-av { width: 24px; height: 24px; border-radius: 50%; background: #d7e4dd; color: #46685a; display: grid; place-items: center; font-size: 12px; }
+.login-pop { position: absolute; right: 0; top: 38px; z-index: 60; width: 220px; background: #fff; border: 1px solid #d5dcdb; border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.18); padding: 14px; text-align: center; }
+.lp-title { font-size: 13px; margin-bottom: 10px; }
+.login-pop input { width: 100%; padding: 7px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; margin-bottom: 8px; }
+.lp-err { color: #b23b3b; font-size: 11px; margin-bottom: 6px; }
 
 .layout { display: flex; min-height: calc(100% - 58px); }
-.side-nav {
-  width: 150px; flex: 0 0 150px;
-  background: #f2f5f4; border-right: 1px solid #e2e7e6;
-  padding: 16px 0;
-}
+.side-nav { width: 150px; flex: 0 0 150px; background: #f2f5f4; border-right: 1px solid #e2e7e6; padding: 16px 0; }
 .side-head { padding: 0 18px 10px; font-size: 11px; color: #9aa7ab; letter-spacing: 2px; }
-.side-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 11px 18px; font-size: 13px; color: #4a5b62; cursor: pointer;
-  border-left: 3px solid transparent;
-}
+.side-item { display: flex; align-items: center; gap: 10px; padding: 11px 18px; font-size: 13px; color: #4a5b62; cursor: pointer; border-left: 3px solid transparent; }
 .side-item:hover { background: #e8eeee; }
 .side-item.active { background: #e1ecef; color: #2f6f8f; border-left-color: #2f6f8f; font-weight: 500; }
 .side-dot { width: 5px; height: 5px; border-radius: 50%; background: #b7c3c6; }
@@ -153,4 +177,12 @@ function handleLogin() {
 .item-meta .cat { color: #2f6f8f; }
 .item-meta .comments { margin-left: auto; }
 .pager { text-align: center; padding: 24px; font-size: 12px; color: #6b7b82; }
+
+.fav-card { display: flex; gap: 14px; padding: 16px; margin-top: 14px; border: 1px solid #e2e7e6; border-radius: 5px; cursor: pointer; }
+.fav-card:hover { border-color: #b9ced4; }
+.fav-thumb { width: 120px; height: 78px; flex: 0 0 120px; background: linear-gradient(135deg,#b9c6cc,#e0d5c4); filter: grayscale(1); border-radius: 3px; }
+.fav-body { flex: 1; min-width: 0; }
+.fav-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+.fav-summary { font-size: 12px; color: #6b7b82; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.fav-meta { font-size: 11px; color: #a5b0b3; margin-top: 8px; }
 </style>

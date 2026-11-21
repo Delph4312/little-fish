@@ -1,6 +1,34 @@
 <script setup>
-defineProps({ article: { type: Object, required: true } })
+import { ref, reactive } from 'vue'
+import { useSystemStore } from '@/stores/systemStore'
+
+const props = defineProps({ article: { type: Object, required: true } })
 const emit = defineEmits(['back'])
+const system = useSystemStore()
+
+// 每条评论的点赞状态与本地增减
+const liked = reactive({})
+function toggleLike(i) {
+  liked[i] = !liked[i]
+}
+
+// 回复弹框
+const replyTo = ref(null)
+const replyText = ref('')
+const extraComments = reactive({})
+function openReply(i) {
+  replyTo.value = i
+  replyText.value = ''
+}
+function sendReply(i) {
+  const text = replyText.value.trim()
+  if (!text) return
+  if (!extraComments[i]) extraComments[i] = []
+  extraComments[i].push({ user: '你', text })
+  replyText.value = ''
+  replyTo.value = null
+  system.notify({ from: '新闻网', text: '回复已发布。' })
+}
 </script>
 
 <template>
@@ -16,11 +44,21 @@ const emit = defineEmits(['back'])
       <div class="c-title">评论区 {{ article.commentCount }}条</div>
       <div v-for="(c, i) in article.comments" :key="i" class="comment">
         <div class="c-head">
-          <b v-if="c.hot" class="hot-tag">热评第一</b>
-          <span class="user">@{{ c.user }}</span>
+          <b v-if="c.hot" class="hot-tag">热评</b>
+          <span class="user">{{ c.user }}</span>
         </div>
         <div class="c-text">{{ c.text }}</div>
-        <div class="c-meta">赞 {{ c.likes }} · 回复 {{ c.replies }}</div>
+        <div class="c-meta">
+          <span class="act" :class="{ on: liked[i] }" @click="toggleLike(i)">👍 {{ c.likes }}<span v-if="liked[i]">·你</span></span>
+          <span class="act" @click="openReply(i)">💬 回复 {{ c.replies }}</span>
+        </div>
+        <div v-if="extraComments[i] && extraComments[i].length" class="replies">
+          <div v-for="(r, k) in extraComments[i]" :key="k"><b>{{ r.user }}：</b>{{ r.text }}</div>
+        </div>
+        <div v-if="replyTo === i" class="reply-box">
+          <input v-model="replyText" placeholder="回复…" @keyup.enter="sendReply(i)" />
+          <button class="btn" @click="sendReply(i)">发送</button>
+        </div>
       </div>
     </div>
     <div class="closed" v-else>
@@ -46,7 +84,14 @@ const emit = defineEmits(['back'])
 .user { font-size: 13px; color: #4a6d8c; font-weight: 500; }
 .hot-tag { background: #fbeaea; color: #b23b3b; font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 400; }
 .c-text { font-size: 13px; line-height: 1.7; }
-.c-meta { font-size: 11px; color: #a5b0b3; margin-top: 6px; }
+.c-meta { font-size: 11px; color: #a5b0b3; margin-top: 8px; display: flex; gap: 16px; }
+.act { cursor: pointer; }
+.act:hover, .act.on { color: #2f6f8f; }
+.replies { margin-top: 8px; padding: 8px 10px; background: #f6f8f8; border-radius: 4px; font-size: 12px; line-height: 1.7; }
+.replies b { color: #4a6d8c; }
+.reply-box { display: flex; gap: 6px; margin-top: 8px; }
+.reply-box input { flex: 1; padding: 6px 8px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; }
+.reply-box .btn { padding: 5px 12px; font-size: 12px; }
 .closed { max-width: 720px; margin: 0 auto; padding: 20px; color: #9aa7ab; font-size: 12px; text-align: center; }
 .bottom { text-align: center; margin-top: 24px; }
 </style>

@@ -6,14 +6,10 @@ const emit = defineEmits(['search', 'goto'])
 const keyword = ref('')
 
 const sites = [
-  { name: '新闻网', glyph: '📰', color: '#2f6f8f', action: 'news' },
-  { name: '浅湾论坛', glyph: '🌊', color: '#3a7d86', action: 'forum' },
   { name: '百度', glyph: '百', color: '#2932e1', action: 'news' },
   { name: '知乎', glyph: '知', color: '#0066ff', action: 'news' },
-  { name: '哔哩哔哩', glyph: '哔', color: '#fb7299', action: 'news' },
   { name: '微博', glyph: '微', color: '#e6162d', action: 'news' },
-  { name: '腾讯邮箱', glyph: '✉', color: '#12a4d9', action: 'news' },
-  { name: '天气', glyph: '☀', color: '#e8a33d', action: 'news' }
+  { name: '新闻网', glyph: '📰', color: '#2f6f8f', action: 'news' }
 ]
 
 function doSearch() {
