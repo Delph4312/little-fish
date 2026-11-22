@@ -5,12 +5,15 @@
 
 export const newsNav = ['首页', '社会', '娱乐', '财经', '法治', '生活']
 
-// 书签：登录后显示，浅湾论坛夹在多个书签之中
-export const bookmarks = [
+// 书签栏：未登录时仅基础书签；微信登录后追加 3~4 个，浅湾论坛与新闻网夹在其中
+export const baseBookmarks = [
   { name: '淘宝', url: 'taobao.com', action: 'other' },
   { name: '京东', url: 'jd.com', action: 'other' },
-  { name: '哔哩哔哩', url: 'bilibili.com', action: 'other' },
+  { name: '哔哩哔哩', url: 'bilibili.com', action: 'other' }
+]
+export const extraBookmarks = [
   { name: '浅湾论坛', url: 'qianwan.forum', action: 'forum' },
+  { name: '新闻网', url: 'news.cn', action: 'news' },
   { name: '知乎', url: 'zhihu.com', action: 'other' },
   { name: '网易邮箱', url: 'mail.163.com', action: 'other' }
 ]
@@ -163,9 +166,9 @@ export const newsDetail = {
 export const crashReport = {
   id: 'crash-report',
   title: '车祸之后：一个家庭的赔偿与沉默',
-  category: '本地新闻', time: '去年12月',
+  category: '本地新闻', time: '2025年11月23日',
   paragraphs: [
-    '去年11月25日晚，本市城郊路段发生一起酒驾肇事逃逸案。一辆黑色轿车撞倒两名行人后逃离现场，伤者送医后抢救无效死亡。',
+    '2025年11月23日晚，本市城郊路段发生一起酒驾肇事逃逸案。一辆黑色轿车撞倒两名行人后逃离现场，伤者送医后抢救无效死亡。',
     '据悉，两名死者系夫妻，当晚正从外地返家。肇事车辆于次日凌晨被找到，车内人员为三男两女，均为未成年人，事发前曾饮酒。据目击者称，事发后车上人员曾下车查看，随后驾车离开。案件审理期间，肇事者家属赔偿死者家属大额款项。不久后，肇事者获假释出狱。',
     '死者留下一对子女，姐姐刚上大学，弟弟在读高中。记者多次联系死者家属，均未获回应。据邻居透露，两个孩子目前由亲戚照应，"弟弟成绩很好，但出了这事以后，话少了很多"。',
     '截至发稿，该案民事赔偿部分已结案，刑事部分仍在审理中。记者就假释程序咨询法律人士，对方表示未成年人案件依法不公开审理，假释条件及流程不便透露。'

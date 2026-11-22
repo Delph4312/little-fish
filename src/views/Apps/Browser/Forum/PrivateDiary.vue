@@ -21,7 +21,7 @@ function unlock() {
     unlocked.value = true
     game.diaryUnlocked = true
     game.addClue('diary-unlocked')
-    system.notify({ from: '系统', text: '日记已解锁。最后一篇似乎藏着另一层密码。' })
+    system.notify({ from: '系统', text: '日记已解锁。' })
   } else {
     err.value = true
     setTimeout(() => (err.value = false), 1500)
@@ -68,7 +68,6 @@ function openPlan() {
       </div>
 
       <div v-if="!planUnlocked" class="plan-lock">
-        <div>最后一篇日记里夹着一张纸，上面写着一串数字，像是密码。</div>
         <div class="plan-lock-row">
           <input v-model="planPwd" type="password" placeholder="输入六位密码" @keyup.enter="openPlan" />
           <button class="btn" @click="openPlan">解锁</button>

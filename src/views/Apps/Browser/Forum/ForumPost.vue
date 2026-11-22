@@ -12,9 +12,34 @@ const input = ref('')
 
 const allComments = computed(() => {
   if (!props.post) return []
+  const base = (props.post.comments || []).map((c) => ({ ...c }))
   const mine = game.userComments[props.post.id] || []
-  return [...(props.post.comments || []), ...mine]
+  return [...base, ...mine]
 })
+
+// 每页最多 7 条：保留小岛老师/鲸鱼先生/作者，其余随机去除，不足用 "-" 空白评论补齐
+const commentPageSize = 7
+const commentPage = ref(1)
+const preparedComments = computed(() => {
+  const list = allComments.value
+  const mustKeep = list.filter((c) => ['小岛老师', '鲸鱼先生'].includes(c.user) || c.isAuthor || c.mine)
+  const others = list.filter((c) => !['小岛老师', '鲸鱼先生'].includes(c.user) && !c.isAuthor && !c.mine)
+  // 随机打散普通评论
+  const shuffled = [...others].sort(() => Math.random() - 0.5)
+  let kept = [...mustKeep, ...shuffled].slice(0, commentPageSize)
+  // 不足补空白评论
+  let fillIdx = 0
+  const blankLikes = [38, 61, 86, 59, 57, 73, 11]
+  while (kept.length < commentPageSize) {
+    kept.push({ user: '-', text: '-', blank: true, likes: blankLikes[fillIdx % blankLikes.length] })
+    fillIdx++
+  }
+  return kept
+})
+const commentTotalPages = computed(() => Math.max(1, Math.ceil(preparedComments.value.length / commentPageSize)))
+const pageComments = computed(() =>
+  preparedComments.value.slice((commentPage.value - 1) * commentPageSize, commentPage.value * commentPageSize)
+)
 
 function postComment() {
   const text = input.value.trim()
@@ -24,27 +49,33 @@ function postComment() {
     return
   }
   if (!game.userComments[props.post.id]) game.userComments[props.post.id] = []
-  game.userComments[props.post.id].push({ user: '谢遥', text, time: '刚刚', mine: true })
+  game.userComments[props.post.id].push({ user: usersName(), text, time: '刚刚', mine: true })
   input.value = ''
-  system.notify({ from: '浅湾论坛', text: '回复已发布。' })
+  commentPage.value = 1
 }
+function usersName() { return '遥遥云梦泽' }
 
-// 帖子点赞
-const postLiked = computed({
-  get: () => game.likedPosts?.includes?.(props.post?.id) || false,
-  set: () => {}
-})
+// 帖子点赞：≤99，点赞 +1
+const postLiked = computed(() => game.likedPosts?.includes?.(props.post?.id) || false)
 function togglePostLike() {
   if (!game.likedPosts) game.likedPosts = []
   const i = game.likedPosts.indexOf(props.post.id)
   if (i >= 0) game.likedPosts.splice(i, 1)
   else game.likedPosts.push(props.post.id)
 }
+const displayLikes = computed(() => {
+  const base = Math.min(99, props.post?.likes || 0)
+  return base + (postLiked.value ? 1 : 0)
+})
 
 // 评论点赞与回复
 const likedComments = reactive({})
 function toggleCommentLike(i) {
   likedComments[i] = !likedComments[i]
+}
+function commentLikes(c, i) {
+  const base = Math.min(99, c.likes || 0)
+  return base + (likedComments[i] ? 1 : 0)
 }
 const replyTo = ref(null)
 const replyText = ref('')
@@ -60,14 +91,15 @@ function sendReply(i) {
     return
   }
   if (!game.userComments[props.post.id]) game.userComments[props.post.id] = []
-  game.userComments[props.post.id].push({ user: '谢遥', text: `回复 ${allComments.value[i]?.user || ''}：${text}`, time: '刚刚', mine: true })
+  const target = pageComments.value[i]?.user || ''
+  game.userComments[props.post.id].push({ user: '遥遥云梦泽', text: `回复 ${target}：${text}`, time: '刚刚', mine: true })
   replyText.value = ''
   replyTo.value = null
 }
 
-// 可点击跳转主页的评论者
+// 可点击跳转主页的评论者（含遥遥云梦泽）
 function isLinkUser(name) {
-  return ['小岛老师', '鲸鱼先生', '谢遥'].includes(name)
+  return ['小岛老师', '鲸鱼先生', '遥遥云梦泽', '谢遥'].includes(name)
 }
 </script>
 
@@ -79,37 +111,41 @@ function isLinkUser(name) {
       <div class="meta">楼主：{{ post.author }} · 发表于 {{ post.time }}</div>
       <p v-for="(line, i) in post.content" :key="i" class="para">{{ line }}</p>
       <div class="stats">
-        <span class="act" :class="{ on: postLiked }" @click="togglePostLike">
-          👍 {{ post.likes + (postLiked ? 1 : 0) }}
-        </span>
+        <span class="act" :class="{ on: postLiked }" @click="togglePostLike">👍 {{ displayLikes }}</span>
         <span>💬 回复 {{ post.replies + (game.userComments[post.id]?.length || 0) }}</span>
       </div>
       <div class="comments">
         <div class="c-title">评论区</div>
-        <div v-for="(c, i) in allComments" :key="i" class="comment" :class="{ mine: c.mine }">
-          <div class="c-head">
-            <b
-              class="c-user"
-              :class="{ link: isLinkUser(c.user) }"
-              @click="isLinkUser(c.user) && emit('open-profile', c.user)"
-            >{{ c.user }}</b>
-            <span v-if="c.time" class="c-time">{{ c.time }}</span>
+        <template v-if="!post.commentsClosed">
+          <div v-for="(c, i) in pageComments" :key="i" class="comment" :class="{ mine: c.mine, blank: c.blank }">
+            <div class="c-head">
+              <b
+                class="c-user"
+                :class="{ link: isLinkUser(c.user) }"
+                @click="isLinkUser(c.user) && emit('open-profile', c.user)"
+              >{{ c.user }}</b>
+              <span v-if="c.replyTo" class="c-reply-to">回复 @{{ c.replyTo }}</span>
+              <span v-if="c.time" class="c-time">{{ c.time }}</span>
+            </div>
+            <div class="c-text">{{ c.text }}</div>
+            <div class="c-actions">
+              <span class="act" :class="{ on: likedComments[i] }" @click="toggleCommentLike(i)">👍 {{ commentLikes(c, i) }}</span>
+              <span class="act" @click="openReply(i)">💬 回复</span>
+            </div>
+            <div v-if="replyTo === i" class="reply-box">
+              <input v-model="replyText" placeholder="回复…" @keyup.enter="sendReply(i)" />
+              <button class="btn" @click="sendReply(i)">发送</button>
+            </div>
           </div>
-          <div class="c-text">{{ c.text }}</div>
-          <div class="c-actions">
-            <span class="act" :class="{ on: likedComments[i] }" @click="toggleCommentLike(i)">
-              👍 {{ c.likes || 0 }}<span v-if="likedComments[i]">+1</span>
-            </span>
-            <span class="act" @click="openReply(i)">💬 回复</span>
+          <!-- 评论区分页 -->
+          <div class="comment-pager" v-if="commentTotalPages > 1">
+            <button v-for="n in commentTotalPages" :key="n" :class="{ cur: commentPage === n }" @click="commentPage = n">{{ n }}</button>
           </div>
-          <div v-if="replyTo === i" class="reply-box">
-            <input v-model="replyText" placeholder="回复…" @keyup.enter="sendReply(i)" />
-            <button class="btn" @click="sendReply(i)">发送</button>
-          </div>
-        </div>
+        </template>
+        <div v-else class="closed">{{ post.commentsClosedText }}</div>
       </div>
 
-      <div class="composer">
+      <div class="composer" v-if="!post.commentsClosed">
         <div v-if="!game.forumLoggedIn" class="need-login" @click="system.notify({ from: '浅湾论坛', text: '请先登录论坛。' })">
           登录后参与讨论 →
         </div>
@@ -140,16 +176,22 @@ h1 { font-size: 20px; font-weight: 600; line-height: 1.5; margin: 0 0 10px; }
 .c-title { font-size: 14px; font-weight: 500; padding: 12px 0; }
 .comment { font-size: 13px; line-height: 1.8; padding: 12px; background: #f6f8f8; border-radius: 4px; margin-bottom: 8px; }
 .comment.mine { background: #e4f0ea; }
+.comment.blank { opacity: .55; }
 .c-head { display: flex; align-items: center; gap: 8px; }
 .c-user { font-weight: 500; color: #4a6d8c; }
 .c-user.link { cursor: pointer; color: #2f6f8f; }
 .c-user.link:hover { text-decoration: underline; }
+.c-reply-to { font-size: 11px; color: #9aa7ab; }
 .c-time { font-size: 10px; color: #a5b0b3; margin-left: auto; }
 .c-text { margin: 2px 0 6px; }
 .c-actions { display: flex; gap: 16px; font-size: 11px; color: #9aa7ab; }
 .reply-box { display: flex; gap: 6px; margin-top: 8px; }
 .reply-box input { flex: 1; padding: 6px 8px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; }
 .reply-box .btn { padding: 5px 12px; font-size: 12px; }
+.comment-pager { display: flex; gap: 6px; justify-content: center; padding: 12px 0; }
+.comment-pager button { border: 1px solid #d5dcdb; background: #fff; border-radius: 4px; padding: 4px 10px; font-size: 12px; cursor: pointer; }
+.comment-pager button.cur { background: #2f6f8f; color: #fff; border-color: #2f6f8f; }
+.closed { padding: 24px; text-align: center; color: #9aa7ab; font-size: 12px; }
 .composer { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid #eef1f0; }
 .composer textarea { width: 100%; height: 72px; resize: vertical; border: 1px solid #d5dcdb; border-radius: 4px; padding: 9px; font-size: 13px; }
 .composer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }

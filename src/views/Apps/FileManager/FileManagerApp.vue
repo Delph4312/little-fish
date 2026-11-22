@@ -101,7 +101,7 @@ function openFile(f) {
     game.addClue('wechat-password')
     openedFile.value = {
       name: f.name,
-      content: `微信登录密码：${ANSWERS.wechat}\n\n（小遥，别忘了改掉这个。）`
+      content: `微信登录密码：${ANSWERS.wechat}`
     }
   } else {
     openedFile.value = {

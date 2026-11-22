@@ -50,13 +50,11 @@ function enter() {
 
       <!-- 旁白 -->
       <div class="story">
-        <div class="chapter">引子 · 一条奇怪的消息</div>
+        <div class="chapter">一条奇怪的消息</div>
         <p class="narration">{{ intro.text }}</p>
         <button class="enter-btn" @click.stop="enter">打开电脑 · 开始查找 ›</button>
       </div>
     </div>
-
-    <div class="hint">点击任意处继续</div>
   </div>
 </template>
 

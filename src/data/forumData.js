@@ -5,26 +5,40 @@
 
 export const users = {
   xieyao: {
-    id: 'xieyao', name: '谢遥',
+    id: 'xieyao', name: '遥遥云梦泽',
     avatarText: '遥', avatarStyle: 'self',
     registerTime: '2025年9月', postCount: 0,
     signature: '',
-    hint: '高三学生。他的主页里藏着一个上了锁的私人日记。'
+    hint: ''
   },
   whale: {
     id: 'whale', name: '鲸鱼先生', tags: ['管理员'],
     avatarText: '鲸', avatarStyle: 'whale',
     registerTime: '——', postCount: 1,
     signature: '指引向那光明的对岸。',
-    hint: '头像：深蓝色背景，一头鲸鱼的下半身没入水中，看不清全貌。'
+    hint: ''
   },
   teacher: {
     id: 'teacher', name: '小岛老师',
     avatarText: '舟', avatarStyle: 'boat',
     registerTime: '2024年3月', postCount: 12,
     signature: '如果你遇到困难，随时可以来找我：windbefore_island',
-    hint: '头像：一只纸折的小船，放在水面上。'
+    hint: ''
   }
+}
+
+// 置顶帖：发布者鲸鱼先生，评论区关闭
+export const pinnedPost = {
+  id: 'pinned', title: '欢迎来到浅湾', section: '公告',
+  author: '鲸鱼先生', time: '——', pinned: true,
+  content: [
+    '这里没有唠叨，没有不解，没有"你只是想太多"。',
+    '如果你累了，就靠岸。这里的水不深。'
+  ],
+  replies: 0, likes: 71,
+  comments: [],
+  commentsClosed: true,
+  commentsClosedText: '本贴评论区已关闭。'
 }
 
 export const profilePosts = {
@@ -53,7 +67,7 @@ export const profilePosts = {
 export const posts = [
   {
     id: 'p1', title: '每天学到凌晨一点，然后呢', author: '凌晨一点的台灯', time: '11月8日 01:14',
-    section: '求助', replies: 31, likes: 87,
+    section: '求助', replies: 13, likes: 86,
     content: [
       '高三。这次模考掉了三十名。我妈说没关系，但她转身的时候叹了口气。',
       '老师说考上好大学就好了。我哥去年毕业，一本，现在在家待着，投了半年简历。他跟我说，别信老师的话。',
@@ -61,12 +75,13 @@ export const posts = [
       '有时候想，如果明天不用醒来就好了。就想想，不敢真做。'
     ],
     comments: [
-      { user: '半杯凉茶', text: '我大三，跟你哥一样。别信老师的话，但也别不信自己。' },
-      { user: 'Can5927', text: '我也高三。每次模考完都想哭，但哭完还得刷题。' },
-      { user: '电量百分之三', text: '我去年高考的，现在在复读。我也不知道值不值。' },
-      { user: '小岛老师', text: '我高三的时候也想过，这一切到底有什么意义。后来发现，意义不是想出来的，是先活下来才慢慢有的。' },
-      { user: '凌晨一点的台灯', text: '回复小岛老师：谢谢。我再撑撑。' },
-      { user: '鲸鱼先生', text: '你没有错。错的是让你觉得只有这一条路的人。' }
+      { user: '半杯凉茶', text: '我大三，跟你哥一样。别信老师的话，但也别不信自己。', likes: 38 },
+      { user: 'Can5927', text: '我也高三。每次模考完都想哭，但哭完还得刷题。', likes: 61 },
+      { user: '电量百分之三', text: '我去年高考的，现在在复读。我也不知道值不值。', likes: 86 },
+      { user: '遥遥云梦泽', text: '原来大家都一样……', likes: 59 },
+      { user: '小岛老师', text: '我高三的时候也想过，这一切到底有什么意义。后来发现，意义不是想出来的，是先活下来才慢慢有的。', likes: 57 },
+      { user: '凌晨一点的台灯', text: '回复小岛老师：谢谢。我再撑撑。', likes: 73 },
+      { user: '鲸鱼先生', text: '你没有错。错的是让你觉得只有这一条路的人。', likes: 11 }
     ]
   },
   {

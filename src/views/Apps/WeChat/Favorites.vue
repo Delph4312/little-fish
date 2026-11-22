@@ -9,8 +9,19 @@ defineProps({ items: { type: Array, default: () => [] } })
       <div v-for="item in items" :key="item.id" class="fav-card">
         <div class="fav-title">{{ item.title }}</div>
         <div class="fav-source">{{ item.source }}</div>
-        <div class="fav-summary">{{ item.summary }}</div>
-        <div class="fav-clue">🔖 线索：{{ item.clue }}</div>
+        <!-- 笔记类型：逐行渲染，支持加粗片段 -->
+        <div v-if="item.type === 'note'" class="fav-note">
+          <div v-for="(line, li) in item.lines" :key="li" class="note-line">
+            <template v-for="(seg, si) in line" :key="si">
+              <b v-if="seg.bold">{{ seg.text }}</b>
+              <span v-else>{{ seg.text }}</span>
+            </template>
+          </div>
+        </div>
+        <template v-else>
+          <div class="fav-summary">{{ item.summary }}</div>
+          <div class="fav-clue">🔖 线索：{{ item.clue }}</div>
+        </template>
       </div>
       <div v-if="!items.length" class="fav-empty">暂无收藏内容</div>
     </div>
@@ -24,6 +35,8 @@ defineProps({ items: { type: Array, default: () => [] } })
 .fav-card { background: #fff; border: 1px solid #e2e7e6; border-radius: 6px; padding: 16px 18px; margin-bottom: 14px; }
 .fav-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
 .fav-source { font-size: 11px; color: #9aa7ab; margin-bottom: 12px; }
+.fav-note { font-size: 13px; line-height: 2; color: #39474d; }
+.note-line { min-height: 1em; }
 .fav-summary { font-size: 13px; line-height: 1.85; color: #39474d; }
 .fav-clue { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e7e6; font-size: 12px; color: #8e6a3a; }
 .fav-empty { text-align: center; color: #a5b0b3; font-size: 13px; padding: 60px 0; }

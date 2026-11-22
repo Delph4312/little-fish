@@ -68,9 +68,9 @@ function publish() {
         <label>正文</label>
         <div class="editor">
           <div class="editor-toolbar">
-            <button type="button" title="加粗" @click="wrap('**', '**')"><b>B</b></button>
-            <button type="button" title="斜体" @click="wrap('*', '*')"><i>I</i></button>
-            <button type="button" title="附件" @click="attach">📎 附件</button>
+            <button type="button" title="加粗" class="disabled-btn"><b>B</b></button>
+            <button type="button" title="斜体" class="disabled-btn"><i>I</i></button>
+            <button type="button" title="附件" class="disabled-btn">📎 附件</button>
             <span class="tool-hint">基础格式</span>
           </div>
           <textarea v-model="content" placeholder="写点什么……"></textarea>
@@ -97,7 +97,8 @@ label { display: block; font-size: 13px; font-weight: 500; margin: 16px 0 8px; }
 .editor { border: 1px solid #d5dcdb; border-radius: 4px; overflow: hidden; }
 .editor-toolbar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: #f4f6f6; border-bottom: 1px solid #d5dcdb; }
 .editor-toolbar button { border: 1px solid #d5dcdb; background: #fff; border-radius: 3px; padding: 3px 9px; font-size: 12px; }
-.editor-toolbar button:hover { background: #e6eef1; }
+.editor-toolbar .disabled-btn { cursor: default; color: #aaa; }
+.editor-toolbar .disabled-btn:hover { background: #fff; }
 .tool-hint { margin-left: auto; font-size: 10px; color: #a5b0b3; }
 .editor textarea { width: 100%; height: 180px; resize: vertical; border: 0; padding: 10px; font-size: 13px; line-height: 1.7; outline: none; }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }

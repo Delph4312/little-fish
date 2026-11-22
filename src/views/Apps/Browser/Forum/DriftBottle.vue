@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { bottleMessages, redBottleMessages, bottleColors } from '@/data/forumData'
 import { useSystemStore } from '@/stores/systemStore'
 
@@ -14,35 +14,26 @@ function shuffle(arr) {
   return a
 }
 
-// 生成海面上的瓶子：低概率红瓶
+// 生成海面上的瓶子：每条消息作为独立漂流瓶，随机分布；负面内容（红瓶文本）强制红瓶
 function makeBottles() {
-  const all = [
+  const normal = [
     ...bottleMessages.wish, ...bottleMessages.bless,
     ...bottleMessages.whisper, ...bottleMessages.short
-  ]
-  const picked = shuffle(all).slice(0, 9)
-  const list = picked.map((text, i) => ({
+  ].map((text) => ({ type: 'normal', text }))
+  const negative = redBottleMessages.map((text) => ({ type: 'red', text }))
+  const all = shuffle([...normal, ...negative])
+  // 全部铺到海面，随机选取一批发射
+  const picked = shuffle(all).slice(0, 16)
+  return picked.map((b, i) => ({
     id: i,
-    type: 'normal',
-    text,
-    color: bottleColors[i % bottleColors.length],
-    left: 6 + ((i * 23) % 84),
-    top: 12 + ((i * 17) % 55),
-    delay: (i % 5) * 0.6
+    type: b.type,
+    text: b.text,
+    color: b.type === 'red' ? 'red' : bottleColors[Math.floor(Math.random() * bottleColors.length)],
+    top: 6 + Math.random() * 78,        // 纵向分布变化大
+    duration: 22 + Math.random() * 26,  // 从右到左流速较慢且各不相同
+    delay: -Math.random() * 40,         // 负延迟让海面一开始就有瓶子
+    vanished: false
   }))
-  // 约 12% 概率塞一个红瓶
-  if (Math.random() < 0.45) {
-    list.push({
-      id: 99,
-      type: 'red',
-      text: redBottleMessages[Math.floor(Math.random() * redBottleMessages.length)],
-      color: 'red',
-      left: 30 + Math.random() * 40,
-      top: 18 + Math.random() * 40,
-      delay: 0
-    })
-  }
-  return shuffle(list)
 }
 
 const bottles = ref(makeBottles())
@@ -50,22 +41,23 @@ const opened = ref(null)
 const fading = ref(false)
 
 function openBottle(b) {
+  if (b.vanished) return
   opened.value = b
   fading.value = false
   if (b.type === 'red') {
     system.triggerGlitch(600)
-    setTimeout(() => { fading.value = true }, 2600)
+    // 红瓶：闪烁后从海面彻底消失
+    setTimeout(() => {
+      fading.value = true
+      const target = bottles.value.find((x) => x.id === b.id)
+      if (target) target.vanished = true
+    }, 2600)
   }
 }
 
 function closeBottle() {
   opened.value = null
   fading.value = false
-}
-
-function refresh() {
-  closeBottle()
-  bottles.value = makeBottles()
 }
 
 const composeText = ref('')
@@ -83,9 +75,8 @@ function sendBottle() {
     <div class="head">
       <div>
         <h2>漂流瓶</h2>
-        <p class="muted">海面上各色漂流瓶随机出现，拆开后显示投瓶人的留言。</p>
+        <p class="muted">海面上各色漂流瓶自右向左缓缓漂过，拆开后显示投瓶人的留言。</p>
       </div>
-      <button class="btn" @click="refresh">↻ 换一片海</button>
     </div>
 
     <div class="sea">
@@ -94,8 +85,9 @@ function sendBottle() {
       <div
         v-for="b in bottles"
         :key="b.id"
+        v-show="!b.vanished"
         class="bottle-wrap"
-        :style="{ left: b.left + '%', top: b.top + '%', animationDelay: b.delay + 's' }"
+        :style="{ top: b.top + '%', animationDuration: b.duration + 's', animationDelay: b.delay + 's' }"
         @click="openBottle(b)"
       >
         <div class="bottle" :class="[b.color, { red: b.type === 'red' }]">
@@ -118,7 +110,6 @@ function sendBottle() {
             :title="c"
             @click="composeColor = c"
           ></button>
-          <span class="muted">（没有红色）</span>
         </div>
         <button class="btn btn-primary" @click="sendBottle">投放</button>
       </div>
@@ -139,23 +130,23 @@ function sendBottle() {
 
 <style scoped>
 .bottle-page { min-height: 100%; background: #eef4f5; padding: 18px 20px 30px; }
-.head { display: flex; justify-content: space-between; align-items: flex-start; }
 .head h2 { margin: 0; font-size: 17px; font-weight: 600; color: #244b5d; }
 .head p { font-size: 12px; margin: 6px 0 0; }
-.sea { position: relative; height: 290px; margin: 16px 0; border-radius: 8px; overflow: hidden; background: linear-gradient(180deg, #8fb0bd 0%, #5d8a9c 45%, #2c5a70 100%); }
-.wave { position: absolute; left: -10%; right: -10%; height: 20px; background: rgba(255,255,255,.12); border-radius: 50%; filter: blur(1px); animation: drift 7s linear infinite; }
+.sea { position: relative; height: 300px; margin: 16px 0; border-radius: 8px; overflow: hidden; background: linear-gradient(180deg, #8fb0bd 0%, #5d8a9c 45%, #2c5a70 100%); }
+.wave { position: absolute; left: -10%; right: -10%; height: 20px; background: rgba(255,255,255,.12); border-radius: 50%; filter: blur(1px); animation: waveflow 9s linear infinite; }
 .w1 { top: 30%; }
-.w2 { top: 62%; animation-duration: 10s; animation-direction: reverse; }
-@keyframes drift { 0% { transform: translateX(-5%); } 100% { transform: translateX(5%); } }
-.bottle-wrap { position: absolute; cursor: pointer; animation: bob 3.4s ease-in-out infinite; }
-@keyframes bob { 0%,100% { transform: translateY(0) rotate(-3deg); } 50% { transform: translateY(-9px) rotate(3deg); } }
+.w2 { top: 62%; animation-duration: 13s; animation-direction: reverse; }
+@keyframes waveflow { 0% { transform: translateX(-6%); } 100% { transform: translateX(6%); } }
+/* 从右至左缓缓漂过 */
+.bottle-wrap { position: absolute; left: 0; cursor: pointer; animation: float-left linear infinite; }
+@keyframes float-left {
+  0% { transform: translateX(105vw) translateY(0) rotate(-3deg); }
+  50% { transform: translateX(50vw) translateY(-10px) rotate(3deg); }
+  100% { transform: translateX(-40px) translateY(0) rotate(-3deg); }
+}
 .bottle { width: 26px; height: 42px; border-radius: 9px 9px 12px 12px; background: #d7e9df; border: 1px solid rgba(0,0,0,.15); position: relative; box-shadow: 0 4px 8px rgba(0,0,0,.2); }
 .bottle .cork { position: absolute; top: -8px; left: 8px; width: 10px; height: 8px; background: #b8916a; border-radius: 2px; }
-.bottle.浅绿 { background: #cfe6d2; }
-.bottle.橙黄 { background: #f0d9a8; }
-.bottle.浅蓝 { background: #c6ddef; }
-.bottle.淡紫 { background: #ddd2ec; }
-.bottle.白 { background: #f4f6f5; }
+.bottle.浅绿 { background: #cfe6d2; } .bottle.橙黄 { background: #f0d9a8; } .bottle.浅蓝 { background: #c6ddef; } .bottle.淡紫 { background: #ddd2ec; } .bottle.白 { background: #f4f6f5; }
 .compose { background: #fff; border: 1px solid #dfe7e8; border-radius: 6px; padding: 16px 18px; }
 .compose h3 { font-size: 14px; font-weight: 500; margin: 0 0 12px; }
 .compose textarea { width: 100%; height: 64px; resize: vertical; border: 1px solid #d5dcdb; border-radius: 4px; padding: 9px; font-size: 13px; }

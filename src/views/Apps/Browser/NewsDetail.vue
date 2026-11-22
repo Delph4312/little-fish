@@ -27,7 +27,6 @@ function sendReply(i) {
   extraComments[i].push({ user: '你', text })
   replyText.value = ''
   replyTo.value = null
-  system.notify({ from: '新闻网', text: '回复已发布。' })
 }
 </script>
 

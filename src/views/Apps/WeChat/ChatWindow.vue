@@ -1,17 +1,37 @@
 <script setup>
-defineProps({
+import { ref, watch } from 'vue'
+
+const props = defineProps({
   conv: { type: Object, default: null },
   convName: { type: String, default: '' }
 })
 
+// 本地消息副本：切换会话时重置，发送消息时追加（真实感）
+const messages = ref([])
+watch(
+  () => props.conv,
+  (c) => { messages.value = c ? [...c.messages] : [] },
+  { immediate: true }
+)
+
+const draft = ref('')
 function isTime(m) { return !!m.t }
+
+function send() {
+  const text = draft.value.trim()
+  if (!text || !props.conv) return
+  messages.value.push({ from: 'me', type: 'text', text })
+  draft.value = ''
+  const box = document.getElementById('chat-messages')
+  if (box) box.scrollTop = box.scrollHeight
+}
 </script>
 
 <template>
   <div class="chat-window">
     <div class="chat-head">{{ convName }}</div>
-    <div class="messages" v-if="conv">
-      <template v-for="(m, i) in conv.messages" :key="i">
+    <div class="messages" id="chat-messages" v-if="conv">
+      <template v-for="(m, i) in messages" :key="i">
         <div v-if="isTime(m)" class="time-sep">{{ m.t }}</div>
         <div v-else class="msg-row" :class="m.from === 'me' ? 'mine' : 'theirs'">
           <div class="msg-avatar">{{ m.from === 'me' ? '遥' : (m.fromName ? m.fromName.slice(0,1) : convName.slice(0,1)) }}</div>
@@ -27,12 +47,16 @@ function isTime(m) { return !!m.t }
           </div>
         </div>
       </template>
-      <div v-if="!conv.messages.length" class="empty">暂无消息</div>
+      <div v-if="!messages.length" class="empty">暂无消息</div>
     </div>
-    <div class="chat-input">
+    <div class="chat-empty" v-else>
+      <div class="ce-logo">💬</div>
+      <p>选择一个联系人开始聊天</p>
+    </div>
+    <div class="chat-input" v-if="conv">
       <div class="toolbar">😊 📎 ✂️</div>
-      <textarea placeholder="发消息"></textarea>
-      <div class="send-row"><span>按 Enter 发送</span><button class="btn">发送(S)</button></div>
+      <textarea v-model="draft" placeholder="发消息" @keydown.enter.exact.prevent="send"></textarea>
+      <div class="send-row"><span>按 Enter 发送</span><button class="btn" @click="send">发送(S)</button></div>
     </div>
   </div>
 </template>
@@ -48,11 +72,14 @@ function isTime(m) { return !!m.t }
 .mine .msg-avatar { background: #cfe0d6; }
 .bubble-wrap { max-width: 66%; }
 .sender { font-size: 11px; color: #8c9a9e; margin-bottom: 3px; }
-.bubble { display: inline-block; background: #fff; border: 1px solid #e3e9e8; border-radius: 6px; padding: 9px 12px; font-size: 13px; line-height: 1.65; color: #1c2429; word-break: break-word; }
+.bubble { display: inline-block; background: #fff; border: 1px solid #e3e9e8; border-radius: 6px; padding: 9px 12px; font-size: 13px; line-height: 1.65; color: #1c2429; word-break: break-word; white-space: pre-wrap; }
 .mine .bubble { background: #d9eddf; border-color: #c7e3d1; }
 .bubble.transfer { background: #fde9d6; border-color: #f4d5b4; }
 .img-photo { width: 170px; height: 96px; border-radius: 4px; background: linear-gradient(135deg, #b7cdd4, #e3d4bd); display: grid; place-items: center; font-size: 11px; color: #48616b; }
 .empty { text-align: center; color: #9aa7ab; margin-top: 60px; font-size: 13px; }
+.chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #b5c0c3; }
+.chat-empty .ce-logo { font-size: 46px; opacity: .5; }
+.chat-empty p { font-size: 13px; }
 .chat-input { flex: 0 0 138px; border-top: 1px solid #e2e7e6; display: flex; flex-direction: column; background: #fafcfb; }
 .toolbar { padding: 6px 16px 0; font-size: 14px; color: #7d8b8f; letter-spacing: 8px; }
 .chat-input textarea { flex: 1; border: 0; outline: none; resize: none; padding: 6px 16px; font-size: 13px; background: transparent; }

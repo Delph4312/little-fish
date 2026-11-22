@@ -1,12 +1,13 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { newsNav, bookmarks, newsList as news, newsDetail, crashReport } from '@/data/newsData'
+import { ref, computed, nextTick } from 'vue'
+import { newsNav, baseBookmarks, extraBookmarks, newsList as news, newsDetail, crashReport } from '@/data/newsData'
 import { useGameStore } from '@/stores/gameStore'
 import { useSystemStore } from '@/stores/systemStore'
 import HomePage from './HomePage.vue'
 import NewsList from './NewsList.vue'
 import NewsDetail from './NewsDetail.vue'
 import ForumHome from './Forum/ForumHome.vue'
+import XhsApp from './XhsApp.vue'
 
 const game = useGameStore()
 const system = useSystemStore()
@@ -18,8 +19,16 @@ const activeTab = ref('t1')
 const address = ref('')
 const history = ref([''])
 const histIndex = ref(0)
+const pageEl = ref(null)
 
 const active = computed(() => tabs.value.find((t) => t.id === activeTab.value))
+const visibleBookmarks = computed(() =>
+  game.wechatLoggedIn ? [...baseBookmarks, ...extraBookmarks] : [...baseBookmarks]
+)
+
+function scrollTop() {
+  nextTick(() => { if (pageEl.value) pageEl.value.scrollTop = 0 })
+}
 
 function newTab() {
   const id = 't' + Date.now()
@@ -28,6 +37,7 @@ function newTab() {
   histIndex.value = 0
   history.value = ['']
   address.value = ''
+  scrollTop()
 }
 function closeTab(id, e) {
   e.stopPropagation()
@@ -42,12 +52,14 @@ function navigate(type, view, title, url, extra = {}) {
   history.value = history.value.slice(0, histIndex.value + 1)
   history.value.push(url)
   histIndex.value = history.value.length - 1
+  scrollTop()
 }
 
 function go(urlValue) {
   const url = (urlValue || address.value).trim()
   if (!url) return
   if (url.includes('qianwan') || url.includes('forum')) return openForum()
+  if (url.includes('xiaohongshu') || url.includes('xhs')) return openXhs()
   if (url.includes('news')) return openNewsHome()
   navigate('news', 'list', '新闻网', url)
 }
@@ -65,6 +77,8 @@ function renderAddress(url) {
     Object.assign(tab, { type: 'home', view: 'home', title: '新标签页' })
   } else if (url.includes('qianwan') || url.includes('forum')) {
     Object.assign(tab, { type: 'forum', view: 'forum', title: '浅湾论坛' })
+  } else if (url.includes('xiaohongshu') || url.includes('xhs')) {
+    Object.assign(tab, { type: 'xhs', view: 'xhs', title: '小红书' })
   } else if (url.includes('article/')) {
     const id = Number(url.split('article/')[1])
     Object.assign(tab, {
@@ -74,6 +88,7 @@ function renderAddress(url) {
   } else {
     Object.assign(tab, { type: 'news', view: 'list', title: '新闻网' })
   }
+  scrollTop()
 }
 function back() {
   if (histIndex.value > 0) {
@@ -100,12 +115,17 @@ function openForum() {
   game.addClue('forum-visited')
   navigate('forum', 'forum', '浅湾论坛', 'qianwan.forum')
 }
+function openXhs() {
+  navigate('xhs', 'xhs', '小红书', 'xiaohongshu.com')
+}
 function gotoSite(action) {
   if (action === 'forum') openForum()
+  else if (action === 'xhs') openXhs()
   else openNewsHome()
 }
 function openBookmark(b) {
   if (b.action === 'forum') openForum()
+  else if (b.action === 'news') openNewsHome()
   else system.notify({ from: '浏览器', text: `正在打开 ${b.name}…` })
 }
 
@@ -167,21 +187,14 @@ function doWxLogin() {
       </div>
     </div>
 
-    <!-- 书签栏：位于地址栏下方；未登录为空，登录后显示 -->
+    <!-- 书签栏：地址栏下方；未登录仅基础书签，登录后追加更多 -->
     <div class="bookmark-bar">
-      <template v-if="game.wechatLoggedIn">
-        <span class="bm-fav-ico">⭐</span>
-        <span
-          v-for="b in bookmarks"
-          :key="b.name"
-          class="bm-item"
-          @click="openBookmark(b)"
-        >🔖 {{ b.name }}</span>
+      <template v-for="b in visibleBookmarks" :key="b.name">
+        <span class="bm-item" @click="openBookmark(b)">🔖 {{ b.name }}</span>
       </template>
-      <span v-else class="bm-empty">书签栏（登录后显示）</span>
     </div>
 
-    <div class="page">
+    <div class="page" ref="pageEl">
       <template v-if="active">
         <HomePage
           v-if="active.type === 'home'"
@@ -198,6 +211,7 @@ function doWxLogin() {
           @back="backToList"
         />
         <ForumHome v-else-if="active.type === 'forum'" />
+        <XhsApp v-else-if="active.type === 'xhs'" />
       </template>
     </div>
   </div>
@@ -225,10 +239,8 @@ function doWxLogin() {
 .wx-pop input { width: 100%; padding: 7px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; margin-bottom: 8px; }
 .wx-err { color: #b23b3b; font-size: 11px; margin-bottom: 6px; }
 .wx-ok { font-size: 12px; color: #3c8a5c; margin-bottom: 10px; }
-.bookmark-bar { height: 30px; flex: 0 0 30px; display: flex; align-items: center; gap: 14px; padding: 0 12px; background: #fafbfb; border-bottom: 1px solid #eef1f0; overflow-x: auto; white-space: nowrap; }
-.bm-fav-ico { font-size: 12px; }
+.bookmark-bar { height: 30px; flex: 0 0 30px; display: flex; align-items: center; gap: 16px; padding: 0 12px; background: #fafbfb; border-bottom: 1px solid #eef1f0; overflow-x: auto; white-space: nowrap; }
 .bm-item { font-size: 11px; color: #4a5b62; cursor: pointer; }
 .bm-item:hover { color: #2f6f8f; }
-.bm-empty { font-size: 11px; color: #b7c2c5; }
 .page { flex: 1; overflow: auto; }
 </style>

@@ -32,7 +32,8 @@ function doLogin() {
 }
 
 function selectNav(n) {
-  activeNav.value = n
+  // 仅"首页"可切换；其他栏目暂不可点击切换；"我的收藏"登录后可用
+  if (n === '首页' || n === '我的收藏') activeNav.value = n
 }
 </script>
 
@@ -102,7 +103,7 @@ function selectNav(n) {
             <div class="fav-body">
               <div class="fav-title">{{ crashReport.title }}</div>
               <div class="fav-summary">{{ crashReport.paragraphs[0] }}</div>
-              <div class="fav-meta">{{ crashReport.category }} · {{ crashReport.time }} · 收藏于 去年12月</div>
+              <div class="fav-meta">{{ crashReport.category }} · {{ crashReport.time }} · 收藏于 2025年11月23日</div>
             </div>
           </div>
         </template>

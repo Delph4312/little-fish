@@ -17,7 +17,9 @@ export const ANSWERS = {
   finalPlace: 'TODO_PLACE',    // 弟弟最终地点：纯文本，待补写；当前占位放行
   newsUsername: '搁浅',        // 新闻网账号用户名
   newsPassword: 'gq7Kp2m',     // 新闻网账号密码（字母数字，≤10位），见文件传输助手消息
-  adminPassword: 'sq9Wx3'      // 论坛管理员模式密码
+  adminPassword: 'sq9Wx3',     // 论坛管理员模式密码
+  forumUsername: '遥遥云梦泽', // 论坛登录用户名（即谢遥的账号名）
+  forumPassword: '251123'      // 论坛登录密码：父母车祸日期 2025-11-23
 }
 
 export const useGameStore = defineStore('game', {

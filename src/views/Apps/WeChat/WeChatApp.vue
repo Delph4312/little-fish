@@ -14,7 +14,7 @@ import Contacts from './Contacts.vue'
 const game = useGameStore()
 const system = useSystemStore()
 const activeNav = ref('聊天')
-const activeConv = ref('sister')
+const activeConv = ref(null) // 刚进入时不选中任何会话（姐姐对话需玩家主动点开）
 const loggedIn = ref(false)
 const password = ref('')
 const loginError = ref(false)
@@ -178,7 +178,7 @@ function usePlugin() {
       <p class="muted">使用账号 {{ wechatAccount.wechatId }} 已登录</p>
       <p class="muted small">{{ wechatAccount.passwordHint }}</p>
       <input v-model="password" type="password" placeholder="请输入微信密码" @keyup.enter="doLogin" />
-      <div v-if="loginError" class="login-err">密码不正确，密码就在这台电脑的文件里。</div>
+      <div v-if="loginError" class="login-err">密码不正确</div>
       <button class="btn btn-primary" @click="doLogin">进入</button>
     </div>
   </div>

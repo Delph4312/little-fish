@@ -8,7 +8,7 @@ const keyword = ref('')
 const sites = [
   { name: '百度', glyph: '百', color: '#2932e1', action: 'news' },
   { name: '知乎', glyph: '知', color: '#0066ff', action: 'news' },
-  { name: '微博', glyph: '微', color: '#e6162d', action: 'news' },
+  { name: '小红书', glyph: '书', color: '#ff2442', action: 'xhs' },
   { name: '新闻网', glyph: '📰', color: '#2f6f8f', action: 'news' }
 ]
 
