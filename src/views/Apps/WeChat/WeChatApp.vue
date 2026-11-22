@@ -6,6 +6,7 @@ import {
 } from '@/data/wechatData'
 import { useGameStore, ANSWERS } from '@/stores/gameStore'
 import { useSystemStore } from '@/stores/systemStore'
+import { images } from '@/data/images'
 import ChatWindow from './ChatWindow.vue'
 import Moments from './Moments.vue'
 import Favorites from './Favorites.vue'
@@ -23,6 +24,11 @@ const hintText = ref('')
 const searchText = ref('')
 
 const conv = computed(() => conversations[activeConv.value])
+function avatarStyle(c) {
+  const key = c.avatarKey
+  const url = key && images.avatar[key]
+  return url ? { backgroundImage: `url(${url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}
+}
 
 // 会话列表：小岛老师需先搜索添加才显示
 const visibleConversations = computed(() =>
@@ -61,20 +67,30 @@ function navTo(item) {
   activeNav.value = item
 }
 
-// 搜索微信号：命中风前屿则添加小岛老师为好友并开启会话
+// 搜索微信号：命中风前屿则弹出个人信息/好友申请窗口
+const showApply = ref(false)
+const remark = ref('')
 function doSearch() {
   const q = searchText.value.trim().toLowerCase()
   if (!q) return
   if ((q === contactApplication.wechatId.toLowerCase() || q.includes('风前屿')) && !game.teacherAdded) {
-    game.teacherAdded = true
-    system.notify({ from: '微信', text: '已添加「风前屿」为好友，你们开始聊天了。' })
+    remark.value = ''
+    showApply.value = true
     searchText.value = ''
-    activeConv.value = 'teacher'
-    activeNav.value = '聊天'
-    game.markConvRead('teacher')
   } else {
     system.notify({ from: '微信', text: '没有找到相关用户。' })
   }
+}
+function fillRemark() {
+  remark.value = contactApplication.remark
+}
+function submitApply() {
+  game.teacherAdded = true
+  showApply.value = false
+  activeConv.value = 'teacher'
+  activeNav.value = '聊天'
+  game.markConvRead('teacher')
+  system.notify({ from: '微信', text: '已添加「风前屿」为好友，你们开始聊天了。' })
 }
 
 // 插件发放：当玩家看过论坛、进过管理员模式、解开了日记计划后，小岛老师发来插件
@@ -128,7 +144,7 @@ function usePlugin() {
             :class="{ active: activeConv === c.id }"
             @click="openConv(c.id)"
           >
-            <div class="conv-avatar">{{ c.avatarText }}</div>
+            <div class="conv-avatar" :style="avatarStyle(c)">{{ c.avatarKey ? '' : c.avatarText }}</div>
             <div class="conv-main">
               <div class="conv-top">
                 <span class="conv-name">{{ c.name }}</span>
@@ -169,14 +185,30 @@ function usePlugin() {
     <div v-if="showHint" class="hint-toast" @click="showHint = false">
       <b>小岛老师：</b>{{ hintText }} <span>×点击关闭</span>
     </div>
+
+    <!-- 添加风前屿：个人信息 / 好友申请窗口 -->
+    <div v-if="showApply" class="apply-mask" @click.self="showApply = false">
+      <div class="apply-card">
+        <div class="apply-title">个人信息</div>
+        <div class="apply-avatar">屿</div>
+        <div class="apply-rows">
+          <div class="apply-row"><span class="k">微信名</span><span class="v">{{ contactApplication.wechatName }}</span></div>
+          <div class="apply-row"><span class="k">微信号</span><span class="v">{{ contactApplication.wechatId }}</span></div>
+          <div class="apply-row clickable" @click="fillRemark"><span class="k">备注</span><span class="v" :class="{ filled: remark }">{{ remark || '点击此处填写备注' }}</span></div>
+          <div class="apply-row"><span class="k">申请信息</span><span class="v msg">{{ contactApplication.message }}</span></div>
+        </div>
+        <div class="apply-actions">
+          <button class="btn" @click="showApply = false">取消</button>
+          <button class="btn btn-primary" @click="submitApply">添加</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="login" v-else>
     <div class="login-card">
-      <div class="login-avatar">遥</div>
-      <h2>微信</h2>
-      <p class="muted">使用账号 {{ wechatAccount.wechatId }} 已登录</p>
-      <p class="muted small">{{ wechatAccount.passwordHint }}</p>
+      <div class="login-avatar" :style="{ backgroundImage: `url(${images.avatar.xieyao})` }"></div>
+      <div class="login-name">遥</div>
       <input v-model="password" type="password" placeholder="请输入微信密码" @keyup.enter="doLogin" />
       <div v-if="loginError" class="login-err">密码不正确</div>
       <button class="btn btn-primary" @click="doLogin">进入</button>
@@ -216,7 +248,8 @@ function usePlugin() {
 .hint-toast span { color: #9aa7ab; font-size: 10px; display: block; margin-top: 6px; }
 .login { display: grid; place-items: center; height: 100%; background: linear-gradient(160deg, #eaf1ee, #dbe7e2); }
 .login-card { text-align: center; background: #fff; padding: 30px 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.12); width: 320px; }
-.login-avatar { width: 58px; height: 58px; border-radius: 8px; background: #cfe6d6; color: #2b5c3a; display: grid; place-items: center; font-size: 26px; margin: 0 auto 12px; }
+.login-avatar { width: 58px; height: 58px; border-radius: 8px; background-color: #cfe6d6; background-size: cover; background-position: center; margin: 0 auto 8px; }
+.login-name { font-size: 15px; color: #2b3236; margin-bottom: 16px; }
 .login-card h2 { margin: 0 0 6px; font-size: 18px; font-weight: 500; }
 .login-card p { margin: 4px 0; font-size: 12px; }
 .login-card .small { color: #b0bbbe; }
@@ -229,4 +262,19 @@ function usePlugin() {
 .pc-desc { font-size: 11px; color: #6b7b82; line-height: 1.6; margin: 6px 0 10px; }
 .pc-actions .btn { padding: 5px 12px; font-size: 12px; }
 .pc-actions .use { background: #8e2b2b; color: #fff; border-color: #8e2b2b; }
+/* 添加好友申请窗口 */
+.apply-mask { position: absolute; inset: 0; background: rgba(10,22,28,.45); display: grid; place-items: center; z-index: 80; }
+.apply-card { width: 340px; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 16px 40px rgba(0,0,0,.35); text-align: center; }
+.apply-title { padding: 12px; background: #2c3e46; color: #fff; font-size: 14px; }
+.apply-avatar { width: 56px; height: 56px; border-radius: 8px; background: #dbe8e4; color: #46685a; display: grid; place-items: center; font-size: 24px; margin: 18px auto 12px; }
+.apply-rows { padding: 0 18px 8px; }
+.apply-row { display: flex; gap: 10px; padding: 9px 4px; border-bottom: 1px solid #eef1f0; font-size: 12px; text-align: left; }
+.apply-row .k { width: 58px; flex: 0 0 58px; color: #9aa7ab; }
+.apply-row .v { flex: 1; color: #39474d; word-break: break-all; }
+.apply-row .v.msg { line-height: 1.6; color: #5b6b73; }
+.apply-row.clickable { cursor: pointer; border-radius: 4px; }
+.apply-row.clickable:hover { background: #f2f7f6; }
+.apply-row .v.filled { color: #2f6f8f; font-weight: 500; }
+.apply-actions { display: flex; gap: 8px; justify-content: flex-end; padding: 12px 18px 18px; }
+.apply-actions .btn { font-size: 12px; padding: 6px 16px; }
 </style>

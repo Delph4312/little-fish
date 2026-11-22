@@ -4,6 +4,37 @@ import { useGameStore, ANSWERS } from '@/stores/gameStore'
 
 const game = useGameStore()
 
+// 工具栏基础操作：选中文件 + 剪切/复制/粘贴/查看/删除
+const selectedFile = ref(null)
+const clipboard = ref(null)
+const clipboardMode = ref('')
+function selectFile(f) { selectedFile.value = f }
+function doCut() {
+  if (!selectedFile.value) return showToast('请先选中一个文件。')
+  clipboard.value = { ...selectedFile.value }
+  clipboardMode.value = 'cut'
+  showToast('已剪切：' + selectedFile.value.name)
+}
+function doCopy() {
+  if (!selectedFile.value) return showToast('请先选中一个文件。')
+  clipboard.value = { ...selectedFile.value }
+  clipboardMode.value = 'copy'
+  showToast('已复制：' + selectedFile.value.name)
+}
+function doPaste() {
+  if (!clipboard.value) return showToast('剪贴板为空。')
+  showToast(`${clipboardMode.value === 'cut' ? '移动' : '粘贴'}：${clipboard.value.name}（演示）`)
+}
+function doView() {
+  if (!selectedFile.value) return showToast('请先选中一个文件。')
+  openFile(selectedFile.value)
+}
+function doDelete() {
+  if (!selectedFile.value) return showToast('请先选中一个文件。')
+  showToast('已删除：' + selectedFile.value.name + '（演示）')
+  selectedFile.value = null
+}
+
 // D 盘里那个随机字母命名的文件夹：唯一可进入，里面放着密码文件。
 // 名字固定，保证线索稳定可解（每次打开都一样）。
 const SECRET_FOLDER = 'QXKM'
@@ -36,13 +67,12 @@ const folders = {
 
 const files = {
   'C:': [],
-  'D:': [{ name: '待整理.txt', type: 'txt', size: '1 KB' }],
+  'D:': [],
   secret: [
-    { name: '微信密码.txt', type: 'txt', size: '1 KB', key: 'wechatpwd', clickable: true },
-    { name: '关于找工作的几点想法.txt', type: 'txt', size: '2 KB' },
+    // 微信密码.txt 为隐藏文件：文件夹内不显示，只能靠搜索找到并打开
+    { name: '微信密码.txt', type: 'txt', size: '1 KB', key: 'wechatpwd', clickable: true, hidden: true },
     { name: '潮汐表.pdf', type: 'pdf', size: '348 KB' },
-    { name: '成绩单.pdf', type: 'pdf', size: '96 KB' },
-    { name: '相关资料.zip', type: 'zip', size: '1.2 MB' }
+    { name: '成绩单.pdf', type: 'pdf', size: '96 KB' }
   ]
 }
 
@@ -68,7 +98,7 @@ const searchResults = computed(() => {
 })
 
 const currentFolders = computed(() => folders[location.value] || [])
-const currentFiles = computed(() => files[location.value] || [])
+const currentFiles = computed(() => (files[location.value] || []).filter((f) => !f.hidden))
 
 function goLocation(loc) {
   location.value = loc
@@ -137,6 +167,13 @@ onUnmounted(() => clearTimeout(toastTimer))
           <span v-if="i < breadcrumb.length - 1" class="sep">›</span>
         </template>
       </div>
+      <div class="tool-actions">
+        <button title="剪切" @click="doCut">✂</button>
+        <button title="复制" @click="doCopy">⧉</button>
+        <button title="粘贴" @click="doPaste">📋</button>
+        <button title="查看" @click="doView">👁</button>
+        <button title="删除" @click="doDelete">🗑</button>
+      </div>
       <div class="search-wrap">
         <span class="search-ico">🔍</span>
         <input v-model="searchQuery" class="search" placeholder="搜索文件" />
@@ -159,7 +196,7 @@ onUnmounted(() => clearTimeout(toastTimer))
           <div class="section-label">搜索结果 · {{ searchResults.length }} 项</div>
           <div v-if="!searchResults.length" class="empty">没有找到与“{{ searchQuery }}”匹配的文件。</div>
           <div class="result-list">
-            <div v-for="f in searchResults" :key="f.loc + f.name" class="result-row" @dblclick="openFile(f)">
+            <div v-for="f in searchResults" :key="f.loc + f.name" class="result-row" :class="{ selected: selectedFile === f }" @click="selectFile(f)" @dblclick="openFile(f)">
               <span class="result-ico" :style="{ color: colorFor(f.type) }">{{ iconFor(f.type) }}</span>
               <span class="result-name">{{ f.name }}</span>
               <span class="result-path">{{ f.loc === 'secret' ? `D:\\${SECRET_FOLDER}` : (f.loc === 'D:' ? 'D:\\' : 'C:\\') }}</span>
@@ -201,7 +238,8 @@ onUnmounted(() => clearTimeout(toastTimer))
               v-for="f in currentFiles"
               :key="f.name"
               class="file"
-              :class="{ clickable: f.clickable }"
+              :class="{ clickable: f.clickable, selected: selectedFile === f }"
+              @click="selectFile(f)"
               @dblclick="openFile(f)"
             >
               <div class="file-icon" :style="{ color: colorFor(f.type) }">{{ iconFor(f.type) }}</div>
@@ -237,6 +275,9 @@ onUnmounted(() => clearTimeout(toastTimer))
 .crumb { cursor: pointer; }
 .crumb:hover { color: var(--accent); }
 .sep { color: #9aa7ab; }
+.tool-actions { display: flex; gap: 2px; }
+.tool-actions button { width: 28px; height: 26px; border: 1px solid transparent; background: transparent; border-radius: 4px; font-size: 13px; }
+.tool-actions button:hover { background: #eef2f1; border-color: #d5dcdb; }
 .search-wrap { position: relative; display: flex; align-items: center; }
 .search-ico { position: absolute; left: 8px; font-size: 12px; opacity: .6; }
 .search { padding: 6px 10px 6px 26px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; width: 170px; }
@@ -264,6 +305,7 @@ onUnmounted(() => clearTimeout(toastTimer))
 .file { width: 96px; text-align: center; font-size: 11px; padding: 8px 4px; border-radius: 4px; cursor: pointer; }
 .file:hover { background: #f0f5f5; }
 .file.clickable { outline: 1px dashed #9fc4d4; }
+.file.selected, .result-row.selected { background: #cfe3f0; outline: 1px solid #7fb0cc; }
 .file-icon { font-size: 30px; }
 .file-name { margin-top: 5px; line-height: 1.4; word-break: break-all; }
 .file-size { color: #a5b0b3; font-size: 10px; margin-top: 3px; }

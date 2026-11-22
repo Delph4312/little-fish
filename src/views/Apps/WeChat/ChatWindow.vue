@@ -1,5 +1,6 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
+import { images } from '@/data/images'
 
 const props = defineProps({
   conv: { type: Object, default: null },
@@ -16,6 +17,26 @@ watch(
 
 const draft = ref('')
 function isTime(m) { return !!m.t }
+
+// 根据会话名/群成员名映射到头像图片
+const avatarMap = {
+  '谢遥': images.avatar.xieyao,
+  '姐姐': images.avatar.sister,
+  '谢晴': images.avatar.sister,
+  '爸爸': images.avatar.dad,
+  '妈妈': images.avatar.mom,
+  '小岛老师': images.avatar.teacher,
+  '鲸鱼先生': images.avatar.whale
+}
+function avatarOf(m) {
+  if (m.from === 'me') return images.avatar.xieyao
+  if (m.fromName) return avatarMap[m.fromName] || null
+  return avatarMap[props.convName] || null
+}
+function avatarTextOf(m) {
+  if (m.from === 'me') return '遥'
+  return m.fromName ? m.fromName.slice(0, 1) : props.convName.slice(0, 1)
+}
 
 function send() {
   const text = draft.value.trim()
@@ -34,7 +55,7 @@ function send() {
       <template v-for="(m, i) in messages" :key="i">
         <div v-if="isTime(m)" class="time-sep">{{ m.t }}</div>
         <div v-else class="msg-row" :class="m.from === 'me' ? 'mine' : 'theirs'">
-          <div class="msg-avatar">{{ m.from === 'me' ? '遥' : (m.fromName ? m.fromName.slice(0,1) : convName.slice(0,1)) }}</div>
+          <div class="msg-avatar" :style="avatarOf(m) ? { backgroundImage: `url(${avatarOf(m)})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">{{ avatarOf(m) ? '' : avatarTextOf(m) }}</div>
           <div class="bubble-wrap">
             <div class="sender" v-if="m.fromName">{{ m.fromName }}</div>
             <div class="bubble" :class="{ transfer: m.type === 'transfer', image: m.type === 'image' || m.type === 'screenshot' }">

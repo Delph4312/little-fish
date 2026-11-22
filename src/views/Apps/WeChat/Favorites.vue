@@ -7,7 +7,7 @@ defineProps({ items: { type: Array, default: () => [] } })
     <div class="fav-head">收藏 <span class="muted">（{{ items.length }}）</span></div>
     <div class="fav-list">
       <div v-for="item in items" :key="item.id" class="fav-card">
-        <div class="fav-title">{{ item.title }}</div>
+        <div class="fav-title" v-if="item.title">{{ item.title }}</div>
         <div class="fav-source">{{ item.source }}</div>
         <!-- 笔记类型：逐行渲染，支持加粗片段 -->
         <div v-if="item.type === 'note'" class="fav-note">

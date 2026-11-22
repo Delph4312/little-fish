@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { users } from '@/data/forumData'
+import { images } from '@/data/images'
 import { useGameStore } from '@/stores/gameStore'
 
 const props = defineProps({
@@ -11,17 +12,20 @@ const emit = defineEmits(['open-post', 'open-diary'])
 const game = useGameStore()
 
 const isXieYao = computed(() => props.user && props.user.id === 'xieyao')
+const avatarUrl = computed(() => {
+  if (!props.user) return null
+  return images.avatar[props.user.id] || null
+})
 </script>
 
 <template>
   <div class="profile" v-if="user">
     <div class="banner" :class="user.avatarStyle"></div>
     <div class="card">
-      <div class="avatar" :class="user.avatarStyle">{{ user.avatarText || '遥' }}</div>
+      <div class="avatar" :class="user.avatarStyle" :style="avatarUrl ? { backgroundImage: `url(${avatarUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">{{ avatarUrl ? '' : (user.avatarText || '遥') }}</div>
       <div class="info">
         <div class="name">{{ user.name || '谢遥' }} <span v-for="t in user.tags || []" class="tag">{{ t }}</span></div>
         <div class="sig">{{ user.signature || '' }}</div>
-        <div class="reg">注册时间：{{ user.registerTime || '——' }} · 发帖数：{{ user.postCount || 0 }}</div>
         <div v-if="user.hint" class="hint">[头像] {{ user.hint }}</div>
       </div>
       <div class="actions" v-if="isXieYao">
@@ -29,7 +33,7 @@ const isXieYao = computed(() => props.user && props.user.id === 'xieyao')
       </div>
     </div>
 
-    <div class="section-title">TA 的帖子</div>
+    <div class="section-title">TA 的帖子 <span class="post-count">· {{ user.postCount || 0 }}</span></div>
     <div v-for="p in posts" :key="p.id" class="mini-post" @click="emit('open-post', p)">
       <div class="mp-title">{{ p.title }}</div>
       <div class="mp-meta">{{ p.author }} · {{ p.time }} · {{ p.section }}</div>
@@ -58,6 +62,7 @@ const isXieYao = computed(() => props.user && props.user.id === 'xieyao')
 .reg { font-size: 11px; color: #a5b0b3; }
 .hint { font-size: 11px; color: #9aa7ab; margin-top: 6px; }
 .section-title { padding: 20px 22px 10px; font-size: 14px; font-weight: 500; }
+.post-count { color: #9aa7ab; font-weight: 400; }
 .mini-post { margin: 0 20px 10px; background: #fff; border-radius: 5px; padding: 14px 16px; cursor: pointer; border: 1px solid #e2e7e6; }
 .mp-title { font-size: 14px; font-weight: 500; }
 .mp-meta { font-size: 11px; color: #a5b0b3; margin: 5px 0; }

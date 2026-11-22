@@ -27,6 +27,7 @@ export const useGameStore = defineStore('game', {
     // 解锁/发现标记
     unlocked: false,
     wechatLoggedIn: false,
+    browserWxLoggedIn: false, // 浏览器右上角的微信登录（免密，需微信软件已登录）
     wechatReadConvs: [],     // 已读会话 id（红点在打开后消失）
     teacherAdded: false,     // 是否已搜索并添加风前屿（小岛老师）
     newsLoggedIn: false,     // 新闻网账号登录（用户名 搁浅）

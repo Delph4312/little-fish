@@ -23,7 +23,7 @@ const pageEl = ref(null)
 
 const active = computed(() => tabs.value.find((t) => t.id === activeTab.value))
 const visibleBookmarks = computed(() =>
-  game.wechatLoggedIn ? [...baseBookmarks, ...extraBookmarks] : [...baseBookmarks]
+  game.browserWxLoggedIn ? [...baseBookmarks, ...extraBookmarks] : [...baseBookmarks]
 )
 
 function scrollTop() {
@@ -126,22 +126,20 @@ function gotoSite(action) {
 function openBookmark(b) {
   if (b.action === 'forum') openForum()
   else if (b.action === 'news') openNewsHome()
+  else if (b.action === 'xhs') openXhs()
   else system.notify({ from: '浏览器', text: `正在打开 ${b.name}…` })
 }
 
-// 浏览器右上角微信快捷登录（复用微信账号密码）
-const showWxLogin = ref(false)
-const wxPwd = ref('')
-const wxErr = ref(false)
+// 浏览器右上角微信快捷登录：免密，但需微信软件已登录（game.wechatLoggedIn）
 function doWxLogin() {
-  if (wxPwd.value.trim() === '614739') {
-    game.wechatLoggedIn = true
+  if (!game.wechatLoggedIn) {
+    system.notify({ from: '浏览器', text: '请先在微信软件中登录。' })
     showWxLogin.value = false
-    wxErr.value = false
-  } else {
-    wxErr.value = true
-    setTimeout(() => (wxErr.value = false), 1500)
+    return
   }
+  game.browserWxLoggedIn = true
+  showWxLogin.value = false
+  system.notify({ from: '浏览器', text: '微信登录成功。' })
 }
 </script>
 
@@ -169,21 +167,10 @@ function doWxLogin() {
         <input v-model="address" @keyup.enter="go()" />
       </div>
       <div class="wx-area">
-        <button class="wx-login" @click="showWxLogin = !showWxLogin">
-          <span>💬</span>{{ game.wechatLoggedIn ? '已登录' : '微信登录' }}
+        <button v-if="!game.browserWxLoggedIn" class="wx-login" @click="doWxLogin">
+          <span>💬</span>微信登录
         </button>
-        <div v-if="showWxLogin" class="wx-pop">
-          <template v-if="game.wechatLoggedIn">
-            <div class="wx-ok">微信已登录</div>
-            <button class="btn" @click="showWxLogin = false">关闭</button>
-          </template>
-          <template v-else>
-            <div class="wx-pop-title">微信快捷登录</div>
-            <input v-model="wxPwd" type="password" placeholder="输入微信密码" @keyup.enter="doWxLogin" />
-            <div v-if="wxErr" class="wx-err">密码不正确</div>
-            <button class="btn btn-primary" @click="doWxLogin">登录</button>
-          </template>
-        </div>
+        <div v-else class="wx-avatar" title="微信已登录">遥</div>
       </div>
     </div>
 
@@ -234,11 +221,7 @@ function doWxLogin() {
 .wx-area { position: relative; }
 .wx-login { display: flex; align-items: center; gap: 5px; border: 1px solid #d5dcdb; background: #fff; border-radius: 16px; padding: 5px 12px; font-size: 12px; color: #4a5b62; white-space: nowrap; }
 .wx-login:hover { border-color: #2f6f8f; color: #2f6f8f; }
-.wx-pop { position: absolute; right: 0; top: 36px; width: 220px; background: #fff; border: 1px solid #d5dcdb; border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 14px; z-index: 60; text-align: center; }
-.wx-pop-title { font-size: 12px; margin-bottom: 10px; }
-.wx-pop input { width: 100%; padding: 7px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; margin-bottom: 8px; }
-.wx-err { color: #b23b3b; font-size: 11px; margin-bottom: 6px; }
-.wx-ok { font-size: 12px; color: #3c8a5c; margin-bottom: 10px; }
+.wx-avatar { width: 28px; height: 28px; border-radius: 50%; background: #cfe6d6; color: #2b5c3a; display: grid; place-items: center; font-size: 13px; user-select: none; }
 .bookmark-bar { height: 30px; flex: 0 0 30px; display: flex; align-items: center; gap: 16px; padding: 0 12px; background: #fafbfb; border-bottom: 1px solid #eef1f0; overflow-x: auto; white-space: nowrap; }
 .bm-item { font-size: 11px; color: #4a5b62; cursor: pointer; }
 .bm-item:hover { color: #2f6f8f; }

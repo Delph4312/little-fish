@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
+import { images } from '@/data/images'
 
 defineProps({
   moments: { type: Array, default: () => [] },
@@ -32,6 +33,26 @@ function sendComment(i) {
   commentOpen.value = null
 }
 
+// 朋友圈图片映射
+const momentImgMap = {
+  '便利店咖啡': images.moments.coffee,
+  '土豆丝': images.moments.potato,
+  '一盘土豆丝': images.moments.potato,
+  '家常菜': images.moments.home,
+  '一桌家常菜': images.moments.home,
+  '防波堤夜景': images.moments.seawall,
+  '远处防波堤夜景': images.moments.seawall,
+  '书桌和台灯': images.moments.seawall
+}
+const avatarMap = {
+  '谢遥': images.avatar.xieyao,
+  '谢晴': images.avatar.sister,
+  '爸爸': images.avatar.dad,
+  '妈妈': images.avatar.mom
+}
+function imgUrl(name) { return momentImgMap[name] || null }
+function avatarUrl(name) { return avatarMap[name] || null }
+
 // 显示点赞名单：原始 + 我（谢遥）点赞时追加
 function displayLikes(m, i) {
   const arr = [...(m.likes || [])]
@@ -43,27 +64,27 @@ function displayLikes(m, i) {
 <template>
   <div class="moments">
     <div class="cover">
-      <div class="cover-scene"></div>
+      <div class="cover-scene" :style="{ background: `url(${images.moments.seawall}) center/cover` }"></div>
       <div class="cover-name">谢遥</div>
     </div>
     <div class="feed">
       <div v-for="(m, i) in moments" :key="i" class="moment">
-        <div class="m-avatar">{{ m.avatarText }}</div>
+        <div class="m-avatar" :style="avatarUrl(m.user) ? { backgroundImage: `url(${avatarUrl(m.user)})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">{{ avatarUrl(m.user) ? '' : m.avatarText }}</div>
         <div class="m-body">
           <div class="m-user">{{ m.user }}</div>
           <div class="m-text">{{ m.text }}</div>
           <div v-if="m.images && m.images.length" class="m-images">
-            <div v-for="(img, j) in m.images" :key="j" class="m-img">{{ img }}</div>
+            <div v-for="(img, j) in m.images" :key="j" class="m-img" :style="imgUrl(img) ? { backgroundImage: `url(${imgUrl(img)})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">{{ imgUrl(img) ? '' : img }}</div>
           </div>
           <div class="m-meta">
             <span>{{ m.time }}</span>
             <span v-if="m.visibility" class="vis">{{ m.visibility }}</span>
             <span class="m-actions">
-              <span class="act" @click="toggleLike(i)">♡ 赞</span>
+              <span class="act" :class="{ liked: liked[i] }" @click="toggleLike(i)">{{ liked[i] ? '♥' : '♡' }} 赞</span>
               <span class="act" @click="openComment(i)">💬 评论</span>
             </span>
           </div>
-          <div v-if="displayLikes(m, i).length" class="m-likes">♡ {{ displayLikes(m, i).join('、') }}</div>
+          <div v-if="displayLikes(m, i).length" class="m-likes"><span class="heart">♥</span> {{ displayLikes(m, i).join('、') }}</div>
           <div v-if="(m.comments && m.comments.length) || (extraComments[i] && extraComments[i].length)" class="m-comments">
             <div v-for="(c, k) in m.comments || []" :key="'o'+k"><b>{{ c.user }}：</b>{{ c.text }}</div>
             <div v-for="(c, k) in extraComments[i] || []" :key="'e'+k"><b>{{ c.user }}：</b>{{ c.text }}</div>
@@ -97,7 +118,9 @@ function displayLikes(m, i) {
 .m-actions { margin-left: auto; display: flex; gap: 10px; }
 .act { cursor: pointer; color: #6b7b82; }
 .act:hover { color: #2f6f8f; }
+.act.liked { color: #8a2b3a; }
 .m-likes { margin-top: 8px; background: #e3e8ea; padding: 6px 10px; font-size: 12px; color: #4a6d8c; border-radius: 3px; }
+.m-likes .heart { color: #8a2b3a; }
 .m-comments { margin-top: 6px; background: #e3e8ea; padding: 8px 10px; font-size: 12px; line-height: 1.7; border-radius: 3px; }
 .m-comments b { color: #4a6d8c; font-weight: 500; }
 .comment-box { display: flex; gap: 6px; margin-top: 8px; }

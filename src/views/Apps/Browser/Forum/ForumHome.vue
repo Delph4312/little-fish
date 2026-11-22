@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { posts, hiddenPosts, users, profilePosts, whaleDialogue, searchPosts, pinnedPost } from '@/data/forumData'
 import { ANSWERS, useGameStore } from '@/stores/gameStore'
 import { useSystemStore } from '@/stores/systemStore'
+import { images } from '@/data/images'
 import ForumPost from './ForumPost.vue'
 import UserProfile from './UserProfile.vue'
 import PrivateDiary from './PrivateDiary.vue'
@@ -19,6 +20,7 @@ const activeSection = ref('全部')
 const page = ref(1)
 const pageSize = 8
 const forumBody = ref(null)
+const forumRoot = ref(null)
 let whaleTimer
 
 const sections = ['全部', '闲聊', '求助', '生活', '公告']
@@ -109,7 +111,10 @@ const profilePostsForUser = computed(() => {
 })
 
 function resetScroll() {
-  nextTick(() => { if (forumBody.value) forumBody.value.scrollTop = 0 })
+  nextTick(() => {
+    if (forumBody.value) forumBody.value.scrollTop = 0
+    if (forumRoot.value) forumRoot.value.scrollTop = 0
+  })
 }
 function openPost(post) {
   currentPost.value = post
@@ -164,11 +169,11 @@ onUnmounted(() => clearInterval(whaleTimer))
 </script>
 
 <template>
-  <div class="forum">
+  <div class="forum" ref="forumRoot">
     <!-- 顶部第一行：logo + 登录/用户，一整行置于最顶 -->
     <div class="topbar">
       <div class="brand" @click="goHome">
-        <span class="brand-mark">浅</span>
+        <span class="brand-mark" :style="{ background: `url(${images.forum.logo}) center/cover` }"></span>
         <span class="brand-name">浅湾论坛</span>
       </div>
       <div class="top-right">
@@ -189,7 +194,7 @@ onUnmounted(() => clearInterval(whaleTimer))
     </div>
 
     <!-- Banner -->
-    <div class="banner" @click="goHome">
+    <div class="banner" @click="goHome" :style="{ background: `url(${images.forum.banner}) center/cover` }">
       <div class="banner-title">浅湾</div>
       <div class="banner-sub">QIAN WAN · 靠岸的地方</div>
     </div>
@@ -326,7 +331,7 @@ onUnmounted(() => clearInterval(whaleTimer))
 </template>
 
 <style scoped>
-.forum { height: 100%; display: flex; flex-direction: column; background: #eef1f2; overflow: auto; }
+.forum { height: 100%; display: flex; flex-direction: column; background: #eef1f2; overflow: auto; position: relative; }
 .topbar { height: 50px; flex: 0 0 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; background: #12313e; color: #eef3f4; }
 .brand { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .brand-mark { width: 28px; height: 28px; border-radius: 6px; background: #c9a27e; color: #12313e; display: grid; place-items: center; font-weight: 700; }
@@ -343,8 +348,9 @@ onUnmounted(() => clearInterval(whaleTimer))
 
 .banner { height: 110px; flex: 0 0 110px; background: linear-gradient(120deg, #12313e 0%, #2b5f6b 50%, #c9a27e 120%); display: grid; place-items: center; position: relative; cursor: pointer; overflow: hidden; }
 .banner::after { content:""; position:absolute; inset:0; background: repeating-linear-gradient(90deg, transparent 0 40px, rgba(255,255,255,.03) 40px 41px); }
-.banner-title { font-size: 44px; font-weight: 700; letter-spacing: 12px; color: #f3ede0; text-shadow: 0 2px 16px rgba(0,0,0,.4), 0 0 26px rgba(201,162,126,.4); font-family: "STKaiti","KaiTi",serif; }
-.banner-sub { position: absolute; bottom: 12px; font-size: 10px; letter-spacing: 3px; color: rgba(243,237,224,.6); }
+.banner-title { font-size: 44px; font-weight: 700; letter-spacing: 12px; color: #12313e; text-shadow: 0 2px 10px rgba(255,255,255,.7), 0 0 26px rgba(255,255,255,.5); font-family: "STKaiti","KaiTi",serif; position: relative; z-index: 2; }
+.banner::before { content: ""; position: absolute; inset: 0; background: rgba(255,255,255,.28); z-index: 1; }
+.banner-sub { position: absolute; bottom: 12px; font-size: 10px; letter-spacing: 3px; color: #2b4a58; z-index: 2; }
 
 .section-bar { height: 46px; flex: 0 0 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; background: #fff; border-bottom: 1px solid #dce3e3; }
 .sections { display: flex; gap: 22px; }
@@ -395,7 +401,7 @@ onUnmounted(() => clearInterval(whaleTimer))
 .admin-box .btn { margin: 4px; font-size: 12px; }
 .admin-on { font-size: 13px; color: #3c8a5c; margin-bottom: 14px; }
 
-.float-msg { position: fixed; right: 18px; bottom: 56px; z-index: 70000; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.float-msg { position: absolute; right: 18px; bottom: 44px; z-index: 700; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .float-msg-toggle { border: 0; background: #2f6f8f; color: #fff; border-radius: 18px; padding: 8px 16px; font-size: 12px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
 .float-msg-toggle span { margin-left: 6px; }
 .float-msg-panel { width: 300px; height: 380px; background: #fff; border: 1px solid #d5dcdb; border-radius: 8px; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,.3); }

@@ -3,6 +3,9 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSystemStore } from '@/stores/systemStore'
 import { useGameStore, ANSWERS } from '@/stores/gameStore'
+import { images } from '@/data/images'
+
+const wallpaperStyle = { background: `url(${images.lockscreenBg}) center/cover no-repeat` }
 
 const router = useRouter()
 const system = useSystemStore()
@@ -45,18 +48,13 @@ function onKey(e) {
 
 <template>
   <div class="lock-root" @keydown="onKey">
-    <div class="wallpaper">
-      <div class="sun"></div>
-      <div class="sea-shimmer"></div>
-      <div class="breakwater"></div>
-      <div class="lighthouse"></div>
-    </div>
+    <div class="wallpaper" :style="wallpaperStyle"></div>
     <div class="shade"></div>
 
     <div class="lock-ui">
       <div class="clock">{{ timeText }}</div>
       <div class="date">{{ dateText }}</div>
-      <div class="avatar">遥</div>
+      <div class="avatar" :style="{ backgroundImage: `url(${images.avatar.xieyao})` }"></div>
       <div class="who">谢遥的电脑</div>
 
       <div class="pwd-box" :class="{ shake: shaking }">
@@ -84,7 +82,7 @@ function onKey(e) {
 .avatar {
   width: 62px; height: 62px; border-radius: 50%;
   background: rgba(255,255,255,.85); color: #2c5361;
-  display: grid; place-items: center; font-size: 28px;
+  background-size: cover; background-position: center;
   margin: 34px auto 10px;
   box-shadow: 0 4px 14px rgba(0,0,0,.3);
 }

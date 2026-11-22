@@ -12,9 +12,10 @@ export const baseBookmarks = [
   { name: '哔哩哔哩', url: 'bilibili.com', action: 'other' }
 ]
 export const extraBookmarks = [
-  { name: '浅湾论坛', url: 'qianwan.forum', action: 'forum' },
-  { name: '新闻网', url: 'news.cn', action: 'news' },
   { name: '知乎', url: 'zhihu.com', action: 'other' },
+  { name: '浅湾论坛', url: 'qianwan.forum', action: 'forum' },
+  { name: '小红书', url: 'xiaohongshu.com', action: 'xhs' },
+  { name: '新闻网', url: 'news.cn', action: 'news' },
   { name: '网易邮箱', url: 'mail.163.com', action: 'other' }
 ]
 

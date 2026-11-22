@@ -3,6 +3,16 @@ import { ref, computed } from 'vue'
 import { crashReport } from '@/data/newsData'
 import { ANSWERS } from '@/stores/gameStore'
 import { useGameStore } from '@/stores/gameStore'
+import { images } from '@/data/images'
+
+const newsImg = {
+  1: images.news.star, 2: images.news.job, 3: images.news.wage,
+  4: images.news.fall, 5: images.news.rights, 6: images.news.shop, 7: images.news.rights
+}
+function thumbStyle(id) {
+  const u = newsImg[id]
+  return u ? { background: `url(${u}) center/cover` } : {}
+}
 
 const props = defineProps({
   news: { type: Array, default: () => [] },
@@ -32,8 +42,11 @@ function doLogin() {
 }
 
 function selectNav(n) {
-  // 仅"首页"可切换；其他栏目暂不可点击切换；"我的收藏"登录后可用
+  // 栏目仅"首页"可切换；"我的收藏"是登录后的功能入口，仍可用
   if (n === '首页' || n === '我的收藏') activeNav.value = n
+}
+function navClickable(n) {
+  return n === '首页' || (n === '我的收藏' && isLoggedIn.value)
 }
 </script>
 
@@ -73,8 +86,8 @@ function selectNav(n) {
           v-for="n in nav"
           :key="n"
           class="side-item"
-          :class="{ active: activeNav === n }"
-          @click="selectNav(n)"
+          :class="{ active: activeNav === n, clickable: navClickable(n) }"
+          @click="navClickable(n) && selectNav(n)"
         >
           <span class="side-dot"></span>{{ n }}
         </div>
@@ -82,7 +95,7 @@ function selectNav(n) {
         <div
           v-if="isLoggedIn"
           class="side-item"
-          :class="{ active: activeNav === '我的收藏' }"
+          :class="{ active: activeNav === '我的收藏', clickable: true }"
           @click="selectNav('我的收藏')"
         >
           <span class="side-dot"></span>⭐ 我的收藏
@@ -99,7 +112,7 @@ function selectNav(n) {
             <span class="date">{{ 1 }} 篇文章</span>
           </div>
           <div class="fav-card" @click="emit('open', crashReport.id)">
-            <div class="fav-thumb"></div>
+            <div class="fav-thumb" :style="{ background: `url(${images.news.crash}) center/cover` }"></div>
             <div class="fav-body">
               <div class="fav-title">{{ crashReport.title }}</div>
               <div class="fav-summary">{{ crashReport.paragraphs[0] }}</div>
@@ -116,7 +129,7 @@ function selectNav(n) {
           </div>
           <div class="list">
             <div v-for="item in news" :key="item.id" class="item" @click="emit('open', item.id)">
-              <div class="thumb"></div>
+              <div class="thumb" :style="thumbStyle(item.id)"></div>
               <div class="item-body">
                 <div class="item-title">{{ item.title }}</div>
                 <div class="item-summary">{{ item.summary }}</div>
@@ -157,8 +170,9 @@ function selectNav(n) {
 .layout { display: flex; min-height: calc(100% - 58px); }
 .side-nav { width: 150px; flex: 0 0 150px; background: #f2f5f4; border-right: 1px solid #e2e7e6; padding: 16px 0; }
 .side-head { padding: 0 18px 10px; font-size: 11px; color: #9aa7ab; letter-spacing: 2px; }
-.side-item { display: flex; align-items: center; gap: 10px; padding: 11px 18px; font-size: 13px; color: #4a5b62; cursor: pointer; border-left: 3px solid transparent; }
-.side-item:hover { background: #e8eeee; }
+.side-item { display: flex; align-items: center; gap: 10px; padding: 11px 18px; font-size: 13px; color: #4a5b62; border-left: 3px solid transparent; }
+.side-item.clickable { cursor: pointer; }
+.side-item.clickable:hover { background: #e8eeee; }
 .side-item.active { background: #e1ecef; color: #2f6f8f; border-left-color: #2f6f8f; font-weight: 500; }
 .side-dot { width: 5px; height: 5px; border-radius: 50%; background: #b7c3c6; }
 .side-item.active .side-dot { background: #2f6f8f; }

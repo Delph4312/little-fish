@@ -8,7 +8,14 @@ const activeNav = ref('发现')
 const keyword = ref('')
 const commentDraft = ref('')
 
-const allNotes = computed(() => [poemNote, ...otherNotes])
+// 送别诗帖子放在第一行最右（第 4 位），与原先首行最右的帖子交换
+const allNotes = computed(() => {
+  const arr = [...otherNotes]
+  const swapIndex = 3 // 第一行第 4 个
+  const displaced = arr[swapIndex]
+  arr[swapIndex] = poemNote
+  return [displaced, ...arr.slice(1)]
+})
 
 function openNote(note) {
   current.value = note
@@ -180,7 +187,7 @@ function sendComment(note) {
 .da-av { width: 32px; height: 32px; border-radius: 50%; background: #ffe9ed; color: #ff2442; display: grid; place-items: center; }
 .detail-text .blk-text { font-size: 14px; line-height: 1.9; color: #333; margin: 0 0 12px; }
 .detail-text .blk-bold { font-size: 15px; font-weight: 700; color: #222; margin: 18px 0 10px; }
-.detail-text .blk-quote { font-size: 15px; font-weight: 600; color: #ff2442; border-left: 3px solid #ff2442; margin: 12px 0; padding: 4px 14px; background: #fff7f8; }
+.detail-text .blk-quote { font-size: 15px; font-weight: 600; color: #2b373d; border-left: 3px solid #c8d0d2; margin: 12px 0; padding: 4px 14px; background: #f6f8f8; }
 .detail-text .blk-list { font-size: 14px; line-height: 1.8; color: #444; margin: 2px 0 2px 12px; }
 .detail-actions { display: flex; gap: 22px; padding: 18px 0; border-top: 1px solid #f0f0f0; border-bottom: 1px solid #f0f0f0; margin-top: 20px; }
 .detail-actions .act { font-size: 12px; color: #888; cursor: pointer; user-select: none; }

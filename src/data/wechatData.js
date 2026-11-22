@@ -15,11 +15,11 @@ export const wechatAccount = {
 // teacher（小岛老师/风前屿）初始不出现，玩家搜索微信号添加后才显示，由 game.teacherAdded 控制。
 // unread 为该会话真实未读条数：姐姐最新2条、班群4条，点击会话后归零（由 game.wechatReadConvs 控制）。
 export const conversationList = [
-  { id: 'sister', name: '姐姐', avatarText: '晴', preview: '不要想不开，快回我消息。', time: '14:30', unread: 2 },
-  { id: 'dad', name: '爸爸', avatarText: '爸', preview: '爸爸，妈妈，我好想你们……', time: '昨天', unread: 0 },
-  { id: 'mom', name: '妈妈', avatarText: '妈', preview: '爸爸，妈妈，我好想你们……', time: '昨天', unread: 0 },
+  { id: 'sister', name: '姐姐', avatarText: '晴', avatarKey: 'sister', preview: '不要想不开，快回我消息。', time: '14:30', unread: 2 },
+  { id: 'dad', name: '爸爸', avatarText: '爸', avatarKey: 'dad', preview: '爸爸，妈妈，我好想你们……', time: '昨天', unread: 0 },
+  { id: 'mom', name: '妈妈', avatarText: '妈', avatarKey: 'mom', preview: '爸爸，妈妈，我好想你们……', time: '昨天', unread: 0 },
   { id: 'class', name: '高三（3）班群', avatarText: '班', preview: '谢遥看到回我。', time: '14:20', unread: 4 },
-  { id: 'teacher', name: '小岛老师', avatarText: '屿', preview: '如果遇到卡住的地方，可以来问我。', time: '15:12', unread: 0, hidden: true },
+  { id: 'teacher', name: '小岛老师', avatarText: '屿', avatarKey: 'teacher', preview: '如果遇到卡住的地方，可以来问我。', time: '15:12', unread: 0, hidden: true },
   { id: 'filehelper', name: '文件传输助手', avatarText: '文', preview: '', time: '', unread: 0 }
 ]
 
@@ -112,9 +112,8 @@ export const conversations = {
     name: '文件传输助手',
     messages: [
       { t: '今天 15:20' },
-      { from: 'other', type: 'text', text: '新闻网账号：搁浅' },
-      { from: 'other', type: 'text', text: '密码：gq7Kp2m' },
-      { from: 'other', type: 'text', text: '（这是你自己记在这里的，别忘了。）' }
+      { from: 'other', type: 'text', text: '搁浅' },
+      { from: 'other', type: 'text', text: 'gq7Kp2m' }
     ]
   }
 }
@@ -212,7 +211,7 @@ export const favorites = [
   {
     id: 'note-poem',
     type: 'note',
-    title: '一首送别诗',
+    title: '',
     source: '笔记',
     lines: [
       [{ text: '唐·苏颋《饯郢州李使君》' }],

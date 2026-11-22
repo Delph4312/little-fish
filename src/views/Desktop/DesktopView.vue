@@ -2,7 +2,10 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useSystemStore } from '@/stores/systemStore'
 import { useGameStore } from '@/stores/gameStore'
+import { images } from '@/data/images'
 import AppIcon from '@/components/AppIcon.vue'
+
+const wallpaperStyle = { background: `url(${images.desktopBg}) center/cover no-repeat` }
 import Window from '@/components/Window.vue'
 
 const system = useSystemStore()
@@ -62,12 +65,7 @@ function onTaskClick(win) {
 
 <template>
   <div class="desktop-root" @click.self="clearSelection">
-    <div class="wallpaper">
-      <div class="sun"></div>
-      <div class="sea-shimmer"></div>
-      <div class="breakwater"></div>
-      <div class="lighthouse"></div>
-    </div>
+    <div class="wallpaper" :style="wallpaperStyle"></div>
 
     <div class="desktop-icons">
       <AppIcon
