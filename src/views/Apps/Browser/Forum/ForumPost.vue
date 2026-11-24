@@ -13,7 +13,8 @@ const input = ref('')
 const allComments = computed(() => {
   if (!props.post) return []
   const base = (props.post.comments || []).map((c) => ({ ...c }))
-  const mine = game.userComments[props.post.id] || []
+  // 顶层评论只取主楼回复；子回复（isSubReply）只在对应评论下方的小评论条显示，不重复出现在评论区
+  const mine = (game.userComments[props.post.id] || []).filter((c) => !c.isSubReply)
   return [...base, ...mine]
 })
 
@@ -27,6 +28,11 @@ const preparedComments = computed(() => {
   // 随机打散普通评论
   const shuffled = [...others].sort(() => Math.random() - 0.5)
   let kept = [...mustKeep, ...shuffled].slice(0, commentPageSize)
+  // 用户主楼新回复始终保留，确保「最新回复在评论区最底端」可见
+  const mineComments = list.filter((c) => c.mine && !c.isSubReply)
+  mineComments.forEach((mc) => {
+    if (!kept.some((k) => k.text === mc.text && k.user === mc.user)) kept.push(mc)
+  })
   // 第16项：回复点赞数不再为 0，补一个非零数
   kept = kept.map((c) => ({ ...c, likes: (c.likes > 0 ? c.likes : (Math.abs(hashStr(c.user + c.text)) % 90) + 3) }))
   // 第35项：补日期，按时间从早到晚排序（最早在前，最新在底）
@@ -75,9 +81,16 @@ function postComment() {
     return
   }
   if (!game.userComments[props.post.id]) game.userComments[props.post.id] = []
-  game.userComments[props.post.id].push({ user: usersName(), text, time: '刚刚', mine: true })
+  // 游戏内时间线：2026年11月23日；用真实时分让新回复排在最底端
+  const d = new Date()
+  const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  game.userComments[props.post.id].push({
+    user: usersName(), text, time: '刚刚',
+    date: `2026年11月23日 ${hhmm}`, mine: true
+  })
   input.value = ''
-  commentPage.value = 1
+  // 跳到评论区最后一页，确保最新回复可见在最底端
+  commentPage.value = commentTotalPages.value
 }
 function usersName() { return '遥遥云梦泽' }
 
@@ -118,9 +131,13 @@ function sendReply(i) {
   }
   if (!game.userComments[props.post.id]) game.userComments[props.post.id] = []
   const target = pageComments.value[i]?.user || ''
+  const d = new Date()
+  const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
   // 回复作为子评论存储，绑定被回复的用户，展示在该评论下方的小评论条中
   game.userComments[props.post.id].push({
-    user: '遥遥云梦泽', text, time: '刚刚', mine: true, replyToUser: target, isSubReply: true
+    user: '遥遥云梦泽', text, time: '刚刚',
+    date: `2026年11月23日 ${hhmm}`,
+    mine: true, replyToUser: target, isSubReply: true
   })
   replyText.value = ''
   replyTo.value = null

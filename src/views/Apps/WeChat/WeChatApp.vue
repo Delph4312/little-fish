@@ -147,7 +147,7 @@ function usePlugin() {
             :class="{ active: activeConv === c.id }"
             @click="openConv(c.id)"
           >
-            <div class="conv-avatar" v-lazy-bg="avatarUrl(c)">{{ c.avatarKey ? '' : c.avatarText }}</div>
+            <div class="conv-avatar" :style="avatarUrl(c) ? { backgroundImage: `url(${avatarUrl(c)})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">{{ avatarUrl(c) ? '' : c.avatarText }}</div>
             <div class="conv-main">
               <div class="conv-top">
                 <span class="conv-name">{{ c.name }}</span>

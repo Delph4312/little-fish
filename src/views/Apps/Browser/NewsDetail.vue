@@ -66,7 +66,7 @@ function sendReply(i) {
         <template v-if="i === 0 && p.startsWith('2025年11月23日')"><b>{{ datePrefix }}</b>{{ p.slice(datePrefix.length) }}</template>
         <template v-else>{{ p }}</template>
       </p>
-      <div class="article-img" v-lazy-bg="articleImg"></div>
+      <img class="article-img" :src="articleImg" alt="新闻配图" />
     </div>
     <div class="comments" v-if="!article.commentsClosed">
       <div class="c-title">评论区 {{ article.commentCount }}条</div>
@@ -105,7 +105,7 @@ function sendReply(i) {
 .meta { color: #a5b0b3; font-size: 12px; margin-bottom: 22px; }
 .para { font-size: 14px; line-height: 2; color: #2b373d; margin: 0 0 16px; text-indent: 2em; }
 .note-img { height: 100px; background: linear-gradient(135deg,#b9c6cc,#e0d5c4); filter: grayscale(1); display: grid; place-items: center; color: #556; font-size: 11px; border-radius: 3px; }
-.article-img { height: 220px; max-width: 640px; margin: 8px auto 22px; filter: grayscale(1); border-radius: 4px; }
+.article-img { display: block; width: 100%; max-width: 640px; height: auto; margin: 8px auto 22px; border-radius: 4px; }
 .comments { max-width: 720px; margin: 0 auto; padding: 0 20px; }
 .c-title { font-size: 15px; font-weight: 500; padding: 16px 0; border-top: 2px solid #eef1f0; }
 .comment { padding: 14px 0; border-bottom: 1px solid #eef1f0; }

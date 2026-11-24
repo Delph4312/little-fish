@@ -129,7 +129,7 @@ let bmToastTimer
 function showBmToast(msg) {
   bmToast.value = msg
   clearTimeout(bmToastTimer)
-  bmToastTimer = setTimeout(() => (bmToast.value = ''), 2600)
+  bmToastTimer = setTimeout(() => (bmToast.value = ''), 4000)
 }
 function canOpenBookmark(b) {
   return ['forum', 'news', 'xhs'].includes(b.action)
@@ -139,7 +139,7 @@ function openBookmark(b) {
   else if (b.action === 'news') openNewsHome()
   else if (b.action === 'xhs') openXhs()
   else {
-    showBmToast(`无法访问 ${b.name}，该网站暂未接入。`)
+    showBmToast(`⚠ 无法访问 ${b.name}，该网站暂未接入。`)
     system.notify({ from: '浏览器', text: `正在打开 ${b.name}…` })
   }
 }
@@ -194,6 +194,7 @@ function doWxLogin() {
         <span
           class="bm-item"
           :class="{ jump: canOpenBookmark(b), disabled: !canOpenBookmark(b) }"
+          :title="canOpenBookmark(b) ? `打开 ${b.name}` : `${b.name}（暂未接入）`"
           @click="openBookmark(b)"
         >🔖 {{ b.name }}</span>
       </template>
@@ -246,10 +247,13 @@ function doWxLogin() {
 .wx-login:hover { border-color: #2f6f8f; color: #2f6f8f; }
 .wx-avatar { width: 28px; height: 28px; border-radius: 50%; background: #cfe6d6; color: #2b5c3a; display: grid; place-items: center; font-size: 13px; user-select: none; }
 .bookmark-bar { height: 30px; flex: 0 0 30px; display: flex; align-items: center; gap: 16px; padding: 0 12px; background: #fafbfb; border-bottom: 1px solid #eef1f0; overflow-x: auto; white-space: nowrap; }
-.bm-item { font-size: 11px; color: #4a5b62; cursor: pointer; padding: 3px 8px; border-radius: 4px; border: 1px solid transparent; }
+/* 可跳转书签：正常深色、手型、蓝色 hover */
+.bm-item { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid transparent; cursor: pointer; }
+.bm-item.jump { color: #1f4e63; }
 .bm-item.jump:hover { color: #2f6f8f; background: #eef4f7; border-color: #cfe0e9; }
-.bm-item.disabled { color: #8c9a9e; }
-.bm-item.disabled:hover { color: #5b6b73; background: #f0f2f2; border-color: #d5dcdb; text-decoration: underline dotted; }
+/* 不可跳转书签：明显灰化 + 虚线下划线 + 禁用光标，hover 有提示反馈 */
+.bm-item.disabled { color: #b3bdc0; text-decoration: line-through; text-decoration-color: #cdd5d7; cursor: not-allowed; }
+.bm-item.disabled:hover { color: #7d8b8f; background: #f4f6f6; border-color: #e2e7e6; text-decoration: underline dotted; }
 .bm-toast { position: absolute; right: 16px; bottom: 16px; background: rgba(28,36,41,.94); color: #fff; font-size: 12px; padding: 10px 16px; border-radius: 6px; z-index: 500; box-shadow: 0 6px 18px rgba(0,0,0,.3); max-width: 280px; }
 .bmfade-enter-active, .bmfade-leave-active { transition: opacity .2s; }
 .bmfade-enter-from, .bmfade-leave-to { opacity: 0; }

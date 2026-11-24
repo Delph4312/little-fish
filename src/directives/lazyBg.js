@@ -16,6 +16,7 @@ function prefetch(url) {
 export const vLazyBg = {
   mounted(el, binding) {
     if (!binding.value) return
+    el.dataset.lazyBg = binding.value
     prefetch(binding.value)
     el.style.backgroundImage = `url(${binding.value})`
   },

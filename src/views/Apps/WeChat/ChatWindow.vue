@@ -116,10 +116,7 @@ function sendScreenshot() {
               <template v-else-if="m.type === 'screenshot'">
                 <div class="wx-shot">
                   <div class="shot-head">谢晴</div>
-                  <div class="shot-row left"><span class="shot-av">晴</span><span class="shot-bub">遥遥，你怎么了？</span></div>
-                  <div class="shot-row right"><span class="shot-bub">不用，学校吃。</span><span class="shot-av">遥</span></div>
-                  <div class="shot-row left"><span class="shot-av">晴</span><span class="shot-bub">不要想不开，快回我消息。</span></div>
-                  <div class="shot-cap">{{ m.caption || '聊天截图' }}</div>
+                  <div class="shot-row right"><span class="shot-av">遥</span><span class="shot-bub">姐姐，不要来找我，也不要为我担心。我不是一个好弟弟。你以后要照顾好自己。</span></div>
                 </div>
               </template>
               <template v-else-if="m.type === 'image'">
@@ -168,15 +165,14 @@ function sendScreenshot() {
 .mine .bubble { background: #d9eddf; border-color: #c7e3d1; }
 .bubble.transfer { background: #fde9d6; border-color: #f4d5b4; }
 .img-photo { width: 170px; height: 96px; border-radius: 4px; background: linear-gradient(135deg, #b7cdd4, #e3d4bd); display: grid; place-items: center; font-size: 11px; color: #48616b; }
-/* 开篇微信消息截图：模拟聊天界面 */
-.wx-shot { width: 220px; background: #ededed; border-radius: 4px; padding: 8px; font-size: 10px; color: #222; }
-.shot-head { text-align: center; color: #666; padding-bottom: 6px; border-bottom: 1px solid #dcdcdc; margin-bottom: 6px; }
-.shot-row { display: flex; align-items: flex-start; gap: 5px; margin: 5px 0; }
+/* 开篇微信消息截图：手机端聊天界面，保留消息完整内容 */
+.wx-shot { width: 250px; background: #ededed; border-radius: 4px; padding: 10px; font-size: 11px; color: #222; }
+.shot-head { text-align: center; color: #444; padding-bottom: 7px; border-bottom: 1px solid #dcdcdc; margin-bottom: 8px; font-size: 11px; }
+.shot-row { display: flex; align-items: flex-start; gap: 6px; margin: 6px 0; }
 .shot-row.right { flex-direction: row-reverse; }
-.shot-av { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 2px; background: #cfe0d6; color: #46685a; display: grid; place-items: center; font-size: 9px; }
-.shot-bub { max-width: 165px; background: #fff; border-radius: 3px; padding: 4px 6px; line-height: 1.5; word-break: break-word; }
+.shot-av { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 3px; background: #cfe0d6; color: #46685a; display: grid; place-items: center; font-size: 10px; background-image: url('/images/xieyao-avatar.webp'); background-size: cover; background-position: center; color: transparent; }
+.shot-bub { max-width: 205px; background: #fff; border-radius: 4px; padding: 6px 8px; line-height: 1.55; word-break: break-word; text-align: left; }
 .shot-row.right .shot-bub { background: #95ec69; }
-.shot-cap { text-align: center; color: #9aa7ab; font-size: 9px; margin-top: 6px; }
 .empty { text-align: center; color: #9aa7ab; margin-top: 60px; font-size: 13px; }
 .chat-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #b5c0c3; }
 .chat-empty .ce-logo { font-size: 46px; opacity: .5; }

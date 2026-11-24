@@ -36,3 +36,21 @@ export const images = {
     logo: img('forum-logo.png')
   }
 }
+
+// 递归收集所有图片 URL，用于启动时一次性预热浏览器缓存，
+// 避免切换视图/打开窗口时图片才加载造成的卡顿。
+function collectUrls(obj, out) {
+  for (const v of Object.values(obj)) {
+    if (typeof v === 'string') out.push(v)
+    else if (v && typeof v === 'object') collectUrls(v, out)
+  }
+  return out
+}
+
+export function preloadAllImages() {
+  const urls = collectUrls(images, [])
+  urls.forEach((url) => {
+    const im = new Image()
+    im.src = url
+  })
+}

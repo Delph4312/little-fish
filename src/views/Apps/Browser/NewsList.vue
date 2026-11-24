@@ -183,7 +183,7 @@ function navClickable(n) {
 .date { font-size: 11px; color: #a5b0b3; }
 .item { display: flex; gap: 14px; padding: 15px 0; border-bottom: 1px solid #eef1f0; cursor: pointer; }
 .item:hover .item-title { color: #2f6f8f; }
-.thumb { width: 120px; height: 78px; flex: 0 0 120px; background: linear-gradient(135deg, #b9c6cc, #e0d5c4); filter: grayscale(1); border-radius: 3px; }
+.thumb { width: 120px; height: 78px; flex: 0 0 120px; background: linear-gradient(135deg, #b9c6cc, #e0d5c4) center/cover no-repeat; border-radius: 3px; }
 .item-body { flex: 1; min-width: 0; }
 .item-title { font-size: 15px; font-weight: 500; line-height: 1.5; margin-bottom: 6px; }
 .item-summary { font-size: 12px; color: #6b7b82; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -194,7 +194,7 @@ function navClickable(n) {
 
 .fav-card { display: flex; gap: 14px; padding: 16px; margin-top: 14px; border: 1px solid #e2e7e6; border-radius: 5px; cursor: pointer; }
 .fav-card:hover { border-color: #b9ced4; }
-.fav-thumb { width: 120px; height: 78px; flex: 0 0 120px; background: linear-gradient(135deg,#b9c6cc,#e0d5c4); filter: grayscale(1); border-radius: 3px; }
+.fav-thumb { width: 120px; height: 78px; flex: 0 0 120px; background: linear-gradient(135deg,#b9c6cc,#e0d5c4) center/cover no-repeat; border-radius: 3px; }
 .fav-body { flex: 1; min-width: 0; }
 .fav-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
 .fav-summary { font-size: 12px; color: #6b7b82; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }

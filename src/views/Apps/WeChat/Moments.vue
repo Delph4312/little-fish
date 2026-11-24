@@ -57,10 +57,10 @@ const avatarMap = {
 function imgUrl(name) { return momentImgMap[name] || null }
 function avatarUrl(name) { return avatarMap[name] || null }
 
-// 显示点赞名单：原始 + 我（谢遥）点赞时追加
+// 显示点赞名单：原始 + 我（谢遥）点赞时追加；去重避免「谢遥」出现两次
 function displayLikes(m, i) {
   const arr = [...(m.likes || [])]
-  if (liked[i]) arr.push('谢遥')
+  if (liked[i] && !arr.includes('谢遥')) arr.push('谢遥')
   return arr
 }
 </script>

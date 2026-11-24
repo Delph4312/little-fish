@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { posts, hiddenPosts, users, profilePosts, whaleDialogue, searchPosts, pinnedPost } from '@/data/forumData'
+import { posts, hiddenPosts, users, profilePosts, searchPosts, pinnedPost } from '@/data/forumData'
 import { ANSWERS, useGameStore } from '@/stores/gameStore'
 import { useSystemStore } from '@/stores/systemStore'
 import { images } from '@/data/images'
@@ -96,7 +96,7 @@ const sectionPosts = computed(() => {
 })
 
 const pagedPosts = computed(() => sectionPosts.value.slice((page.value - 1) * pageSize, page.value * pageSize))
-const totalPages = computed(() => Math.max(3, Math.ceil(sectionPosts.value / pageSize)))
+const totalPages = computed(() => Math.max(3, Math.ceil(sectionPosts.value.length / pageSize)))
 
 // 今日热度榜：帖子名称用 "-" 留空
 const hotList = computed(() => {
@@ -159,20 +159,12 @@ function isLinkUser(name) {
   return ['小岛老师', '鲸鱼先生', '遥遥云梦泽', '谢遥'].includes(name)
 }
 
-// 私信悬浮窗：收起时新消息右下角弹出
-function onWhaleNewMessage(text) {
-  if (!game.forumMsgsOpen) {
-    system.notify({ from: '鲸鱼先生', text, type: 'whale', duration: 6000 })
-  }
-}
-
-// 鲸鱼先生干扰：仅在登录后触发
+// 鲸鱼先生干扰：仅在登录后触发；不再弹桌面右下角消息，仅保留轻微故障氛围
 onMounted(() => {
   whaleTimer = setInterval(() => {
     if (!game.forumLoggedIn) return
     if (game.whaleTriggers.includes('forum-idle')) return
-    system.notify({ from: '鲸鱼先生', text: whaleDialogue.interruptions[0], type: 'whale', duration: 7000 })
-    system.triggerGlitch(700)
+    system.triggerGlitch(240)
     game.markWhaleTriggered('forum-idle')
   }, 60000)
 })
@@ -185,7 +177,7 @@ onUnmounted(() => clearInterval(whaleTimer))
     <div class="topbar">
       <div class="brand" @click="goHome">
         <span class="brand-mark" :style="{ background: `url(${images.forum.logo}) center/cover` }"></span>
-        <span class="brand-name">浅湾论坛</span>
+        <span class="brand-name">浅湾</span>
       </div>
       <div class="top-right">
         <template v-if="!game.forumLoggedIn">
@@ -344,7 +336,7 @@ onUnmounted(() => clearInterval(whaleTimer))
         💬 私信 <span>{{ game.forumMsgsOpen ? '▾' : '▴' }}</span>
       </button>
       <div v-show="game.forumMsgsOpen" class="float-msg-panel">
-        <Messages :active="game.forumMsgsOpen" @new-message="onWhaleNewMessage" />
+        <Messages :active="game.forumMsgsOpen" />
       </div>
     </div>
 
@@ -355,13 +347,14 @@ onUnmounted(() => clearInterval(whaleTimer))
 
 <style scoped>
 .forum { height: 100%; display: flex; flex-direction: column; background: #eef1f2; overflow: auto; position: relative; }
-.topbar { height: 50px; flex: 0 0 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; background: #12313e; color: #eef3f4; }
+.topbar { height: 50px; flex: 0 0 50px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; background: #b9d6e6; color: #1b4257; border-bottom: 1px solid #9dc2d8; }
 .brand { display: flex; align-items: center; gap: 8px; cursor: pointer; }
-.brand-mark { width: 28px; height: 28px; border-radius: 6px; background: #c9a27e; color: #12313e; display: grid; place-items: center; font-weight: 700; }
+.brand-mark { width: 28px; height: 28px; border-radius: 6px; background: #fff; color: #1b4257; display: grid; place-items: center; font-weight: 700; }
 .brand-name { font-size: 16px; font-weight: 600; letter-spacing: 1px; }
 .top-right { position: relative; }
-.login-btn { border: 1px solid #c9a27e; background: transparent; color: #f3ede0; padding: 5px 18px; border-radius: 16px; font-size: 12px; }
-.login-btn:hover { background: #c9a27e; color: #12313e; }
+.login-btn { border: 1px solid #1b4257; background: transparent; color: #1b4257; padding: 5px 18px; border-radius: 16px; font-size: 12px; }
+.login-btn:hover { background: #1b4257; color: #fff; }
+.uc-av { background: #fff; color: #1b4257; }
 .login-pop { position: absolute; right: 0; top: 34px; z-index: 60; width: 220px; background: #fff; border: 1px solid #d5dcdb; border-radius: 6px; box-shadow: 0 8px 20px rgba(0,0,0,.15); padding: 14px; text-align: center; }
 .lp-title { font-size: 13px; margin-bottom: 10px; color: #2c3e46; }
 .login-pop input { width: 100%; padding: 7px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; margin-bottom: 8px; }
@@ -394,8 +387,8 @@ onUnmounted(() => clearInterval(whaleTimer))
 .pinned-row { display: flex; align-items: center; gap: 10px; background: #e6f1f9; border: 1px solid #bfd9ea; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px; cursor: pointer; }
 .pin-tag { background: #2f6f8f; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 3px; }
 .pin-title { flex: 1; font-size: 14px; font-weight: 500; color: #234a60; }
-.pin-author { font-size: 11px; color: #4a7690; }
-.pin-author.link { cursor: pointer; color: #2f6f8f; }
+.pin-author { font-size: 11px; color: #4a6d8c; }
+.pin-author.link { cursor: pointer; color: #4a6d8c; }
 .pin-author.link:hover { text-decoration: underline; }
 .hidden-banner { margin-bottom: 12px; padding: 10px 16px; background: #f7eaea; border-left: 3px solid #a33; border-radius: 4px; font-size: 12px; color: #8e2b2b; }
 .post-list { display: flex; flex-direction: column; gap: 10px; }
@@ -405,7 +398,7 @@ onUnmounted(() => clearInterval(whaleTimer))
 .p-summary { font-size: 12px; color: #6b7b82; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .p-meta { font-size: 11px; color: #a5b0b3; margin-top: 8px; }
 .p-author { color: #4a6d8c; font-weight: 500; }
-.p-author.link { color: #2f6f8f; cursor: pointer; }
+.p-author.link { color: #4a6d8c; cursor: pointer; }
 .p-author.link:hover { text-decoration: underline; }
 .empty { padding: 40px; text-align: center; color: #9aa7ab; font-size: 12px; background: #fff; border-radius: 6px; }
 .pager { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 20px 0; }

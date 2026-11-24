@@ -1,14 +1,29 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { whaleDialogue } from '@/data/forumData'
 import { images } from '@/data/images'
-import { useSystemStore } from '@/stores/systemStore'
 import { useGameStore } from '@/stores/gameStore'
 
-const system = useSystemStore()
 const game = useGameStore()
 const props = defineProps({ active: { type: Boolean, default: true } })
-const emit = defineEmits(['new-message'])
+
+// 局部抖动：只抖动私信窗口，不触发桌面级 glitch
+const shaking = ref(false)
+function shakeWindow() {
+  shaking.value = false
+  requestAnimationFrame(() => {
+    shaking.value = true
+    setTimeout(() => (shaking.value = false), 220)
+  })
+}
+
+// 消息体 ref：新回复到达后自动滚到最新
+const cBody = ref(null)
+function scrollToLatest() {
+  nextTick(() => {
+    if (cBody.value) cBody.value.scrollTop = cBody.value.scrollHeight
+  })
+}
 
 // 当前时间（时:分），用于分隔线文案
 function nowHM() {
@@ -66,19 +81,20 @@ function send() {
     const pushNext = () => {
       if (idx >= replies.length) return
       thread.value.push({ user: '鲸鱼先生', text: replies[idx] })
-      system.triggerGlitch(90) // 抖动效果再减小：每条仅 90ms
+      shakeWindow()          // 仅抖动私信窗口，不触发桌面故障效果
+      scrollToLatest()       // 自动跟随滚动到最新回复
       idx += 1
       if (idx < replies.length) setTimeout(pushNext, 700)
     }
     pushNext()
     game.markWhaleTriggered('chat')
-    if (replies.length) emit('new-message', replies[replies.length - 1])
+    // 不再向桌面右下角发送鲸鱼先生的消息通知
   }, 650)
 }
 </script>
 
 <template>
-  <div class="messages">
+  <div class="messages" :class="{ shaking }">
     <div class="contact-tabs">
       <div
         v-for="c in contacts"
@@ -89,7 +105,7 @@ function send() {
         <span class="ct-av" v-lazy-bg="images.avatar.whale"></span>{{ c.name }}
       </div>
     </div>
-    <div class="c-body">
+    <div class="c-body" ref="cBody">
       <div v-for="(m, i) in thread" :key="i" class="row" :class="{ mine: m.mine, sys: m.sys }">
         <template v-if="m.sys">
           <div class="sys-line">{{ m.text }}</div>
@@ -114,6 +130,12 @@ function send() {
 
 <style scoped>
 .messages { display: flex; flex-direction: column; height: 100%; background: #f5f7f6; }
+.messages.shaking { animation: msg-shake .22s ease; }
+@keyframes msg-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
 .contact-tabs { height: 40px; flex: 0 0 40px; display: flex; align-items: center; border-bottom: 1px solid #e2e7e6; background: #fff; }
 .ctab { display: flex; align-items: center; gap: 8px; height: 100%; padding: 0 14px; font-size: 12px; color: #3a4a50; border-bottom: 2px solid #2f6f8f; }
 .ct-av { width: 24px; height: 24px; border-radius: 50%; background: #16324f; color: #9fc6d6; display: grid; place-items: center; font-size: 11px; }

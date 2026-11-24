@@ -153,19 +153,22 @@ function onResizePointerDown(e, dir) {
   height: 100% !important;
   border-radius: 0;
 }
-/* 手柄命中区加宽到 14px，覆盖窗口边缘；z-index 200 高于应用浮层 */
+/* 手柄命中区：覆盖边缘但不侵占标题栏右上角按钮区（约 110px x 36px）。
+   控制按钮层级提高到 300，保证左上角/右上角按钮始终可点。 */
 .rs { position: absolute; z-index: 200; touch-action: none; }
-.rs-n, .rs-s { left: 16px; right: 16px; height: 14px; cursor: ns-resize; }
-.rs-n { top: 0; }
+.rs-n, .rs-s { left: 16px; right: 16px; height: 12px; cursor: ns-resize; }
+.rs-n { top: 0; right: 118px; }
 .rs-s { bottom: 0; }
-.rs-w, .rs-e { top: 16px; bottom: 16px; width: 14px; cursor: ew-resize; }
+.rs-w, .rs-e { top: 16px; bottom: 16px; width: 12px; cursor: ew-resize; }
 .rs-w { left: 0; }
 .rs-e { right: 0; }
-.rs-nw, .rs-ne, .rs-sw, .rs-se { width: 28px; height: 28px; }
+.rs-nw, .rs-ne, .rs-sw, .rs-se { width: 24px; height: 24px; }
 .rs-nw { top: 0; left: 0; cursor: nwse-resize; }
-.rs-ne { top: 0; right: 0; cursor: nesw-resize; }
+/* 右上角手柄下移到标题栏下方（标题栏高约 36px），不再遮挡关闭/最大化/最小化 */
+.rs-ne { top: 38px; right: 0; cursor: nesw-resize; }
 .rs-sw { bottom: 0; left: 0; cursor: nesw-resize; }
 .rs-se { bottom: 0; right: 0; cursor: nwse-resize; }
+.window-controls { position: relative; z-index: 300; }
 /* 右下角明显的拖拽斜纹标识 */
 .rs-se i {
   position: absolute; right: 3px; bottom: 3px;
