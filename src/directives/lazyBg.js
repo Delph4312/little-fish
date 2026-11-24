@@ -13,19 +13,28 @@ function prefetch(url) {
   im.src = url
 }
 
+// 统一设置背景图的显示方式：cover / 居中 / 不平铺。
+// 之前只设 backgroundImage，导致以原尺寸平铺或裁切错位，看起来像"没加载/加载慢"。
+function applyBg(el, url) {
+  el.style.backgroundImage = `url(${url})`
+  el.style.backgroundSize = 'cover'
+  el.style.backgroundPosition = 'center'
+  el.style.backgroundRepeat = 'no-repeat'
+}
+
 export const vLazyBg = {
   mounted(el, binding) {
     if (!binding.value) return
     el.dataset.lazyBg = binding.value
     prefetch(binding.value)
-    el.style.backgroundImage = `url(${binding.value})`
+    applyBg(el, binding.value)
   },
   updated(el, binding) {
     if (!binding.value) return
     if (el.dataset.lazyBg === binding.value) return
     el.dataset.lazyBg = binding.value
     prefetch(binding.value)
-    el.style.backgroundImage = `url(${binding.value})`
+    applyBg(el, binding.value)
   }
 }
 

@@ -116,7 +116,7 @@ function sendScreenshot() {
               <template v-else-if="m.type === 'screenshot'">
                 <div class="wx-shot">
                   <div class="shot-head">谢晴</div>
-                  <div class="shot-row right"><span class="shot-av">遥</span><span class="shot-bub">姐姐，不要来找我，也不要为我担心。我不是一个好弟弟。你以后要照顾好自己。</span></div>
+                  <div class="shot-row right"><span class="shot-av" v-lazy-bg="images.avatar.xieyao"></span><span class="shot-bub">姐姐，不要来找我，也不要为我担心。我不是一个好弟弟。你以后要照顾好自己。</span></div>
                 </div>
               </template>
               <template v-else-if="m.type === 'image'">
@@ -170,7 +170,7 @@ function sendScreenshot() {
 .shot-head { text-align: center; color: #444; padding-bottom: 7px; border-bottom: 1px solid #dcdcdc; margin-bottom: 8px; font-size: 11px; }
 .shot-row { display: flex; align-items: flex-start; gap: 6px; margin: 6px 0; }
 .shot-row.right { flex-direction: row-reverse; }
-.shot-av { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 3px; background: #cfe0d6; color: #46685a; display: grid; place-items: center; font-size: 10px; background-image: url('/images/xieyao-avatar.webp'); background-size: cover; background-position: center; color: transparent; }
+.shot-av { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 3px; background: #cfe0d6; display: grid; place-items: center; }
 .shot-bub { max-width: 205px; background: #fff; border-radius: 4px; padding: 6px 8px; line-height: 1.55; word-break: break-word; text-align: left; }
 .shot-row.right .shot-bub { background: #95ec69; }
 .empty { text-align: center; color: #9aa7ab; margin-top: 60px; font-size: 13px; }
