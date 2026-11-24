@@ -123,11 +123,25 @@ function gotoSite(action) {
   else if (action === 'xhs') openXhs()
   else openNewsHome()
 }
+// 浏览器内部右下角提示窗：不可跳转书签点击时给出明确反馈
+const bmToast = ref('')
+let bmToastTimer
+function showBmToast(msg) {
+  bmToast.value = msg
+  clearTimeout(bmToastTimer)
+  bmToastTimer = setTimeout(() => (bmToast.value = ''), 2600)
+}
+function canOpenBookmark(b) {
+  return ['forum', 'news', 'xhs'].includes(b.action)
+}
 function openBookmark(b) {
   if (b.action === 'forum') openForum()
   else if (b.action === 'news') openNewsHome()
   else if (b.action === 'xhs') openXhs()
-  else system.notify({ from: '浏览器', text: `正在打开 ${b.name}…` })
+  else {
+    showBmToast(`无法访问 ${b.name}，该网站暂未接入。`)
+    system.notify({ from: '浏览器', text: `正在打开 ${b.name}…` })
+  }
 }
 
 // 浏览器右上角微信快捷登录：免密，但需微信软件已登录（game.wechatLoggedIn）
@@ -177,9 +191,18 @@ function doWxLogin() {
     <!-- 书签栏：地址栏下方；未登录仅基础书签，登录后追加更多 -->
     <div class="bookmark-bar">
       <template v-for="b in visibleBookmarks" :key="b.name">
-        <span class="bm-item" @click="openBookmark(b)">🔖 {{ b.name }}</span>
+        <span
+          class="bm-item"
+          :class="{ jump: canOpenBookmark(b), disabled: !canOpenBookmark(b) }"
+          @click="openBookmark(b)"
+        >🔖 {{ b.name }}</span>
       </template>
     </div>
+
+    <!-- 不可跳转书签的右下角提示窗（浏览器内部，确保可见） -->
+    <transition name="bmfade">
+      <div v-if="bmToast" class="bm-toast">{{ bmToast }}</div>
+    </transition>
 
     <div class="page" ref="pageEl">
       <template v-if="active">
@@ -205,7 +228,7 @@ function doWxLogin() {
 </template>
 
 <style scoped>
-.browser { display: flex; flex-direction: column; height: 100%; background: #fff; }
+.browser { display: flex; flex-direction: column; height: 100%; background: #fff; position: relative; }
 .tabs { height: 34px; flex: 0 0 34px; display: flex; align-items: flex-end; background: #d9e0e2; padding: 0 6px; gap: 2px; }
 .tab { display: flex; align-items: center; gap: 8px; height: 27px; max-width: 180px; padding: 0 8px; background: #eceff0; border-radius: 6px 6px 0 0; font-size: 11px; cursor: pointer; }
 .tab.active { background: #fff; }
@@ -223,7 +246,12 @@ function doWxLogin() {
 .wx-login:hover { border-color: #2f6f8f; color: #2f6f8f; }
 .wx-avatar { width: 28px; height: 28px; border-radius: 50%; background: #cfe6d6; color: #2b5c3a; display: grid; place-items: center; font-size: 13px; user-select: none; }
 .bookmark-bar { height: 30px; flex: 0 0 30px; display: flex; align-items: center; gap: 16px; padding: 0 12px; background: #fafbfb; border-bottom: 1px solid #eef1f0; overflow-x: auto; white-space: nowrap; }
-.bm-item { font-size: 11px; color: #4a5b62; cursor: pointer; }
-.bm-item:hover { color: #2f6f8f; }
+.bm-item { font-size: 11px; color: #4a5b62; cursor: pointer; padding: 3px 8px; border-radius: 4px; border: 1px solid transparent; }
+.bm-item.jump:hover { color: #2f6f8f; background: #eef4f7; border-color: #cfe0e9; }
+.bm-item.disabled { color: #8c9a9e; }
+.bm-item.disabled:hover { color: #5b6b73; background: #f0f2f2; border-color: #d5dcdb; text-decoration: underline dotted; }
+.bm-toast { position: absolute; right: 16px; bottom: 16px; background: rgba(28,36,41,.94); color: #fff; font-size: 12px; padding: 10px 16px; border-radius: 6px; z-index: 500; box-shadow: 0 6px 18px rgba(0,0,0,.3); max-width: 280px; }
+.bmfade-enter-active, .bmfade-leave-active { transition: opacity .2s; }
+.bmfade-enter-from, .bmfade-leave-to { opacity: 0; }
 .page { flex: 1; overflow: auto; }
 </style>

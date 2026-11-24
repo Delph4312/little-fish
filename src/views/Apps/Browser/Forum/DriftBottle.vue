@@ -22,8 +22,8 @@ function makeBottles() {
   ].map((text) => ({ type: 'normal', text }))
   const negative = redBottleMessages.map((text) => ({ type: 'red', text }))
   const all = shuffle([...normal, ...negative])
-  // 全部铺到海面，随机选取一批发射
-  const picked = shuffle(all).slice(0, 16)
+  // 增加海面瓶子数量：各类别等比例随机铺满（约 26 个）
+  const picked = shuffle(all).slice(0, Math.min(26, all.length))
   return picked.map((b, i) => ({
     id: i,
     type: b.type,
@@ -45,17 +45,16 @@ function openBottle(b) {
   opened.value = b
   fading.value = false
   if (b.type === 'red') {
-    system.triggerGlitch(600)
-    // 红瓶：闪烁后从海面彻底消失
-    setTimeout(() => {
-      fading.value = true
-      const target = bottles.value.find((x) => x.id === b.id)
-      if (target) target.vanished = true
-    }, 2600)
+    system.triggerGlitch(400)
   }
 }
 
 function closeBottle() {
+  // 负面瓶：关闭文字窗口时，对应瓶子立即从海面消失
+  if (opened.value && opened.value.type === 'red') {
+    const target = bottles.value.find((x) => x.id === opened.value.id)
+    if (target) target.vanished = true
+  }
   opened.value = null
   fading.value = false
 }
@@ -65,8 +64,10 @@ const composeColor = ref(bottleColors[0])
 const sent = ref(false)
 function sendBottle() {
   if (!composeText.value.trim()) return
+  // 投放后立即清空文字框，只保留短暂提示
+  composeText.value = ''
   sent.value = true
-  setTimeout(() => { sent.value = false; composeText.value = '' }, 1800)
+  setTimeout(() => { sent.value = false }, 1200)
 }
 </script>
 
@@ -147,6 +148,9 @@ function sendBottle() {
 .bottle { width: 26px; height: 42px; border-radius: 9px 9px 12px 12px; background: #d7e9df; border: 1px solid rgba(0,0,0,.15); position: relative; box-shadow: 0 4px 8px rgba(0,0,0,.2); }
 .bottle .cork { position: absolute; top: -8px; left: 8px; width: 10px; height: 8px; background: #b8916a; border-radius: 2px; }
 .bottle.浅绿 { background: #cfe6d2; } .bottle.橙黄 { background: #f0d9a8; } .bottle.浅蓝 { background: #c6ddef; } .bottle.淡紫 { background: #ddd2ec; } .bottle.白 { background: #f4f6f5; }
+/* 负面内容的瓶子强制红色瓶身（含裂纹瓶口），必须覆盖上面的普通配色 */
+.bottle.red, .bottle.red.浅绿, .bottle.red.橙黄, .bottle.red.浅蓝, .bottle.red.淡紫, .bottle.red.白 { background: #8e2b2b !important; border-color: #5e1414 !important; box-shadow: 0 4px 12px rgba(142,43,43,.5); }
+.bottle.red .cork { background: #6d2020; }
 .compose { background: #fff; border: 1px solid #dfe7e8; border-radius: 6px; padding: 16px 18px; }
 .compose h3 { font-size: 14px; font-weight: 500; margin: 0 0 12px; }
 .compose textarea { width: 100%; height: 64px; resize: vertical; border: 1px solid #d5dcdb; border-radius: 4px; padding: 9px; font-size: 13px; }

@@ -7,7 +7,14 @@ import { useGameStore } from '@/stores/gameStore'
 
 const system = useSystemStore()
 const game = useGameStore()
+const props = defineProps({ active: { type: Boolean, default: true } })
 const emit = defineEmits(['new-message'])
+
+// 当前时间（时:分），用于分隔线文案
+function nowHM() {
+  const d = new Date()
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
 
 // 私信对象：仅鲸鱼先生（其余占位，不可切换）
 const contacts = [
@@ -19,7 +26,7 @@ const activeContact = ref('whale')
 const script = whaleDialogue.withPlayer
 const thread = ref([
   ...whaleDialogue.old.map((m) => ({ ...m, mine: m.user === '谢遥' })),
-  { user: '鲸鱼先生', text: '—— 以下为新的对话 ——', sys: true },
+  { user: '鲸鱼先生', text: nowHM(), sys: true },
   { user: '鲸鱼先生', text: script[0].text }
 ])
 
@@ -52,10 +59,18 @@ function send() {
   input.value = ''
   filled.value = false
   step.value += 1
+  // 首条回复延迟送达，之后逐条弹出（不再一次性批量显示）
   setTimeout(() => {
-    replies.forEach((r) => thread.value.push({ user: '鲸鱼先生', text: r }))
-    // 抖动效果减小：仅 180ms 轻微故障
-    system.triggerGlitch(180)
+    if (!props.active) return  // 私信窗口收起后，已收到的私信不再变动
+    let idx = 0
+    const pushNext = () => {
+      if (idx >= replies.length) return
+      thread.value.push({ user: '鲸鱼先生', text: replies[idx] })
+      system.triggerGlitch(90) // 抖动效果再减小：每条仅 90ms
+      idx += 1
+      if (idx < replies.length) setTimeout(pushNext, 700)
+    }
+    pushNext()
     game.markWhaleTriggered('chat')
     if (replies.length) emit('new-message', replies[replies.length - 1])
   }, 650)
@@ -71,7 +86,7 @@ function send() {
         class="ctab active"
         @click="activeContact = c.id"
       >
-        <span class="ct-av" :style="{ backgroundImage: `url(${images.avatar.whale})`, backgroundSize: 'cover', backgroundPosition: 'center' }"></span>{{ c.name }}
+        <span class="ct-av" v-lazy-bg="images.avatar.whale"></span>{{ c.name }}
       </div>
     </div>
     <div class="c-body">
@@ -89,7 +104,7 @@ function send() {
       <input
         :value="input"
         readonly
-        :placeholder="step >= playerLines.length ? '对话已结束' : '点击此处输入…'"
+        placeholder="请输入内容"
         @click="fillScripted"
       />
       <button class="btn" :disabled="!filled" @click="send">发送</button>

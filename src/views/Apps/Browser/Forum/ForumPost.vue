@@ -27,15 +27,41 @@ const preparedComments = computed(() => {
   // 随机打散普通评论
   const shuffled = [...others].sort(() => Math.random() - 0.5)
   let kept = [...mustKeep, ...shuffled].slice(0, commentPageSize)
+  // 第16项：回复点赞数不再为 0，补一个非零数
+  kept = kept.map((c) => ({ ...c, likes: (c.likes > 0 ? c.likes : (Math.abs(hashStr(c.user + c.text)) % 90) + 3) }))
+  // 第35项：补日期，按时间从早到晚排序（最早在前，最新在底）
+  kept = kept.map((c, idx) => ({
+    ...c,
+    date: c.date || c.time || commentDateFor(idx)
+  }))
+  kept.sort((a, b) => dateValue(a.date) - dateValue(b.date))
   // 不足补空白评论
   let fillIdx = 0
   const blankLikes = [38, 61, 86, 59, 57, 73, 11]
   while (kept.length < commentPageSize) {
-    kept.push({ user: '-', text: '-', blank: true, likes: blankLikes[fillIdx % blankLikes.length] })
+    kept.push({ user: '-', text: '-', blank: true, likes: blankLikes[fillIdx % blankLikes.length], date: commentDateFor(kept.length) })
     fillIdx++
   }
   return kept
 })
+
+// 评论日期：游戏内时间线为 2026-11-23，这里给一条从早到晚的日期序列
+function commentDateFor(idx) {
+  const day = 18 + (idx % 6) // 18~23 日
+  const hh = String(8 + (idx * 3) % 14).padStart(2, '0')
+  const mm = String((idx * 17) % 60).padStart(2, '0')
+  return `2026年11月${day}日 ${hh}:${mm}`
+}
+function dateValue(s) {
+  const m = String(s || '').match(/(\d+)年(\d+)月(\d+)日\s*(\d+):(\d+)/)
+  if (!m) return 0
+  return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5])
+}
+function hashStr(s) {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
+  return h
+}
 const commentTotalPages = computed(() => Math.max(1, Math.ceil(preparedComments.value.length / commentPageSize)))
 const pageComments = computed(() =>
   preparedComments.value.slice((commentPage.value - 1) * commentPageSize, commentPage.value * commentPageSize)
@@ -92,9 +118,20 @@ function sendReply(i) {
   }
   if (!game.userComments[props.post.id]) game.userComments[props.post.id] = []
   const target = pageComments.value[i]?.user || ''
-  game.userComments[props.post.id].push({ user: '遥遥云梦泽', text: `回复 ${target}：${text}`, time: '刚刚', mine: true })
+  // 回复作为子评论存储，绑定被回复的用户，展示在该评论下方的小评论条中
+  game.userComments[props.post.id].push({
+    user: '遥遥云梦泽', text, time: '刚刚', mine: true, replyToUser: target, isSubReply: true
+  })
   replyText.value = ''
   replyTo.value = null
+}
+
+// 取某条评论下的子回复（小评论条）
+function subRepliesOf(c) {
+  if (c.blank) return []
+  return (game.userComments[props.post.id] || []).filter(
+    (r) => r.isSubReply && r.replyToUser === c.user
+  )
 }
 
 // 可点击跳转主页的评论者（含遥遥云梦泽）
@@ -125,12 +162,19 @@ function isLinkUser(name) {
                 @click="isLinkUser(c.user) && emit('open-profile', c.user)"
               >{{ c.user }}</b>
               <span v-if="c.replyTo" class="c-reply-to">回复 @{{ c.replyTo }}</span>
-              <span v-if="c.time" class="c-time">{{ c.time }}</span>
+              <span v-if="c.date" class="c-time">{{ c.date }}</span>
             </div>
             <div class="c-text">{{ c.text }}</div>
             <div class="c-actions">
               <span class="act" :class="{ on: likedComments[i] }" @click="toggleCommentLike(i)">👍 {{ commentLikes(c, i) }}</span>
               <span class="act" @click="openReply(i)">💬 回复</span>
+            </div>
+            <!-- 子回复：小评论条，显示在对应评论下方 -->
+            <div v-if="subRepliesOf(c).length" class="sub-replies">
+              <div v-for="(sr, si) in subRepliesOf(c)" :key="si" class="sub-reply">
+                <b class="sub-user">{{ sr.user }}</b>：<span class="sub-text">{{ sr.text }}</span>
+                <span class="sub-date">{{ sr.date || '2026年11月23日 15:20' }}</span>
+              </div>
             </div>
             <div v-if="replyTo === i" class="reply-box">
               <input v-model="replyText" placeholder="回复…" @keyup.enter="sendReply(i)" />
@@ -185,6 +229,10 @@ h1 { font-size: 20px; font-weight: 600; line-height: 1.5; margin: 0 0 10px; }
 .c-time { font-size: 10px; color: #a5b0b3; margin-left: auto; }
 .c-text { margin: 2px 0 6px; }
 .c-actions { display: flex; gap: 16px; font-size: 11px; color: #9aa7ab; }
+.sub-replies { margin: 8px 0 0 14px; padding-left: 12px; border-left: 2px solid #cfe0e9; }
+.sub-reply { font-size: 12px; line-height: 1.8; color: #39474d; padding: 4px 0; }
+.sub-user { color: #4a6d8c; font-weight: 500; }
+.sub-date { color: #a5b0b3; font-size: 10px; margin-left: 8px; }
 .reply-box { display: flex; gap: 6px; margin-top: 8px; }
 .reply-box input { flex: 1; padding: 6px 8px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; }
 .reply-box .btn { padding: 5px 12px; font-size: 12px; }

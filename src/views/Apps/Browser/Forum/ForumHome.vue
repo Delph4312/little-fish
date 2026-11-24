@@ -16,6 +16,7 @@ const system = useSystemStore()
 const view = ref('home')
 const currentPost = ref(null)
 const profileUser = ref(null)
+const profileFrom = ref('home') // 进入个人主页前的来源视图
 const activeSection = ref('全部')
 const page = ref(1)
 const pageSize = 8
@@ -122,8 +123,13 @@ function openPost(post) {
   resetScroll()
 }
 function openProfile(user) {
+  profileFrom.value = view.value === 'profile' ? 'home' : view.value
   profileUser.value = user
   view.value = 'profile'
+  resetScroll()
+}
+function backFromProfile() {
+  view.value = profileFrom.value
   resetScroll()
 }
 function openProfileByName(name) {
@@ -146,6 +152,11 @@ function selectSection(s) {
 function goPage(n) {
   // 除第一页外均不可点击跳转
   if (n === 1) page.value = 1
+}
+
+// 有个人主页可跳转的楼主/用户名（与评论区一致）
+function isLinkUser(name) {
+  return ['小岛老师', '鲸鱼先生', '遥遥云梦泽', '谢遥'].includes(name)
 }
 
 // 私信悬浮窗：收起时新消息右下角弹出
@@ -194,7 +205,7 @@ onUnmounted(() => clearInterval(whaleTimer))
     </div>
 
     <!-- Banner -->
-    <div class="banner" @click="goHome" :style="{ background: `url(${images.forum.banner}) center/cover` }">
+    <div class="banner" @click="goHome" v-lazy-bg="images.forum.banner">
       <div class="banner-title">浅湾</div>
       <div class="banner-sub">QIAN WAN · 靠岸的地方</div>
     </div>
@@ -219,14 +230,19 @@ onUnmounted(() => clearInterval(whaleTimer))
 
     <!-- 主体 -->
     <div class="forum-body" ref="forumBody">
+      <!-- 个人主页返回上一页：板块导航栏下方 -->
+      <div v-if="view === 'profile'" class="profile-back-bar">
+        <button @click="backFromProfile">‹ 返回上一页</button>
+      </div>
+
       <template v-if="view === 'home'">
-        <div class="home-layout" :class="{ 'no-side': activeSection === '公告' }">
+        <div class="home-layout">
           <main class="post-area">
             <!-- 置顶帖：鲸鱼先生发布，评论区关闭 -->
             <div class="pinned-row" @click="openPost(pinnedPost)">
               <span class="pin-tag">置顶</span>
               <span class="pin-title">{{ pinnedPost.title }}</span>
-              <span class="pin-author">鲸鱼先生</span>
+              <span class="pin-author link" @click.stop="openProfile(users.whale)">鲸鱼先生</span>
             </div>
 
             <div v-if="activeSection !== '公告'" class="hidden-banner" v-show="game.adminMode">🔓 管理员模式已开启 · 隐藏帖子已显示</div>
@@ -236,14 +252,21 @@ onUnmounted(() => clearInterval(whaleTimer))
                 <div class="p-main">
                   <div class="p-title">{{ p.title }}</div>
                   <div class="p-summary">{{ p.content[0] }}</div>
-                  <div class="p-meta">{{ p.author }} · {{ p.time }} · 回复 {{ p.replies }} · 赞 {{ p.likes }}</div>
+                  <div class="p-meta">
+                    <b
+                      class="p-author"
+                      :class="{ link: isLinkUser(p.author) }"
+                      @click.stop="isLinkUser(p.author) && openProfileByName(p.author)"
+                    >{{ p.author }}</b>
+                    · {{ p.time }} · 回复 {{ p.replies }} · 赞 {{ p.likes }}
+                  </div>
                 </div>
               </div>
               <div v-if="!pagedPosts.length && activeSection !== '公告'" class="empty">该板块暂时没有帖子。</div>
             </div>
 
             <!-- 分页：至少 3 页，仅第一页可点 -->
-            <div class="pager" v-if="activeSection !== '公告'">
+            <div class="pager">
               <button disabled>‹ 上一页</button>
               <span
                 v-for="n in totalPages"
@@ -256,7 +279,7 @@ onUnmounted(() => clearInterval(whaleTimer))
           </main>
 
           <!-- 右侧栏 -->
-          <aside class="side-panel" v-if="activeSection !== '公告'">
+          <aside class="side-panel">
             <div class="side-card">
               <div class="side-card-title">快捷入口</div>
               <div class="quick-grid">
@@ -321,7 +344,7 @@ onUnmounted(() => clearInterval(whaleTimer))
         💬 私信 <span>{{ game.forumMsgsOpen ? '▾' : '▴' }}</span>
       </button>
       <div v-show="game.forumMsgsOpen" class="float-msg-panel">
-        <Messages @new-message="onWhaleNewMessage" />
+        <Messages :active="game.forumMsgsOpen" @new-message="onWhaleNewMessage" />
       </div>
     </div>
 
@@ -352,7 +375,7 @@ onUnmounted(() => clearInterval(whaleTimer))
 .banner::before { content: ""; position: absolute; inset: 0; background: rgba(255,255,255,.28); z-index: 1; }
 .banner-sub { position: absolute; bottom: 12px; font-size: 10px; letter-spacing: 3px; color: #2b4a58; z-index: 2; }
 
-.section-bar { height: 46px; flex: 0 0 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; background: #fff; border-bottom: 1px solid #dce3e3; }
+.section-bar { height: 46px; flex: 0 0 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; background: #e8f2f7; border-bottom: 1px solid #cfe0e9; }
 .sections { display: flex; gap: 22px; }
 .sections span { font-size: 13px; color: #6b7b82; cursor: pointer; padding: 4px 0; }
 .sections span.active { color: #2f6f8f; font-weight: 600; border-bottom: 2px solid #2f6f8f; }
@@ -361,14 +384,19 @@ onUnmounted(() => clearInterval(whaleTimer))
 .post-btn { background: #2f6f8f; color: #fff; border-color: #2f6f8f; }
 .admin-btn { border-color: #c8d3d6; }
 .forum-body { flex: 1; }
+.profile-back-bar { padding: 8px 22px; background: #fff; border-bottom: 1px solid #e2e7e6; }
+.profile-back-bar button { border: 0; background: transparent; color: #2f6f8f; cursor: pointer; font-size: 12px; }
+.profile-back-bar button:hover { text-decoration: underline; }
 .home-layout { display: flex; gap: 18px; max-width: 1180px; margin: 0 auto; padding: 20px; align-items: flex-start; }
 .home-layout.no-side { max-width: 800px; }
 .post-area { flex: 1; min-width: 0; }
 .side-panel { width: 280px; flex: 0 0 280px; display: flex; flex-direction: column; gap: 14px; }
-.pinned-row { display: flex; align-items: center; gap: 10px; background: #fff8ec; border: 1px solid #ecd8b4; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px; cursor: pointer; }
-.pin-tag { background: #c9a27e; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 3px; }
-.pin-title { flex: 1; font-size: 14px; font-weight: 500; color: #6b5227; }
-.pin-author { font-size: 11px; color: #a08b62; }
+.pinned-row { display: flex; align-items: center; gap: 10px; background: #e6f1f9; border: 1px solid #bfd9ea; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px; cursor: pointer; }
+.pin-tag { background: #2f6f8f; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 3px; }
+.pin-title { flex: 1; font-size: 14px; font-weight: 500; color: #234a60; }
+.pin-author { font-size: 11px; color: #4a7690; }
+.pin-author.link { cursor: pointer; color: #2f6f8f; }
+.pin-author.link:hover { text-decoration: underline; }
 .hidden-banner { margin-bottom: 12px; padding: 10px 16px; background: #f7eaea; border-left: 3px solid #a33; border-radius: 4px; font-size: 12px; color: #8e2b2b; }
 .post-list { display: flex; flex-direction: column; gap: 10px; }
 .post-row { background: #fff; border: 1px solid #e2e7e6; border-radius: 6px; padding: 15px 18px; cursor: pointer; }
@@ -376,6 +404,9 @@ onUnmounted(() => clearInterval(whaleTimer))
 .p-title { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
 .p-summary { font-size: 12px; color: #6b7b82; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .p-meta { font-size: 11px; color: #a5b0b3; margin-top: 8px; }
+.p-author { color: #4a6d8c; font-weight: 500; }
+.p-author.link { color: #2f6f8f; cursor: pointer; }
+.p-author.link:hover { text-decoration: underline; }
 .empty { padding: 40px; text-align: center; color: #9aa7ab; font-size: 12px; background: #fff; border-radius: 6px; }
 .pager { display: flex; justify-content: center; align-items: center; gap: 8px; padding: 20px 0; }
 .pager button, .pager span { border: 1px solid #d5dcdb; background: #fff; border-radius: 4px; padding: 5px 10px; font-size: 12px; color: #5b6b73; cursor: pointer; }

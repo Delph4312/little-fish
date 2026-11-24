@@ -22,7 +22,7 @@ const avatarUrl = computed(() => {
   <div class="profile" v-if="user">
     <div class="banner" :class="user.avatarStyle"></div>
     <div class="card">
-      <div class="avatar" :class="user.avatarStyle" :style="avatarUrl ? { backgroundImage: `url(${avatarUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">{{ avatarUrl ? '' : (user.avatarText || '遥') }}</div>
+      <div class="avatar" :class="user.avatarStyle" v-lazy-bg="avatarUrl || null">{{ avatarUrl ? '' : (user.avatarText || '遥') }}</div>
       <div class="info">
         <div class="name">{{ user.name || '谢遥' }} <span v-for="t in user.tags || []" class="tag">{{ t }}</span></div>
         <div class="sig">{{ user.signature || '' }}</div>

@@ -87,5 +87,32 @@ export const otherNotes = [
     blocks: [{ type: 'text', text: '失眠的第 N 天，索性出门跑步。天还没亮，海边只有我和潮水。' }],
     stats: { likes: 567, favs: 143, comments: 21, shares: 9 }, liked: false, faved: false,
     comments: []
+  },
+  {
+    id: 'xhs-5', author: '一只柠檬精', avatar: '柠',
+    title: '把阳台改成了小花园，租房也能拥有自己的春天',
+    cover: 'linear-gradient(135deg,#a8c69a,#5f8a6b)',
+    blocks: [
+      { type: 'text', text: '租的房子没有院子，但阳台朝南，光照特别好。花了两个周末，从一个堆杂物的角落变成了现在这样。' },
+      { type: 'text', text: '最先养活的是绿萝和薄荷，后来慢慢加了月季、绣球。看着它们一棵棵冒新芽，比什么都治愈。' }
+    ],
+    stats: { likes: 1820, favs: 654, comments: 73, shares: 41 }, liked: false, faved: false,
+    comments: [
+      { id: 1, user: '想养花的小李', avatar: '花', text: '求清单！都是什么品种呀？', likes: 23, liked: false },
+      { id: 2, user: ' sunflower ', avatar: '葵', text: '朝南阳台太幸福了，我的朝北只能养绿萝。', likes: 11, liked: false }
+    ]
+  },
+  {
+    id: 'xhs-6', author: '深夜食堂常客', avatar: '夜',
+    title: '一个人住的第三年，终于学会了给自己好好做顿饭',
+    cover: 'linear-gradient(135deg,#e0b48c,#a85f43)',
+    blocks: [
+      { type: 'text', text: '以前觉得一个人吃饭随便对付就行，后来发现，认真给自己做顿饭，是照顾自己的开始。' },
+      { type: 'text', text: '今天做了番茄牛腩，炖了一个半小时，满屋子都是香味。日子嘛，就是要有点热气腾腾的样子。' }
+    ],
+    stats: { likes: 934, favs: 288, comments: 46, shares: 15 }, liked: false, faved: false,
+    comments: [
+      { id: 1, user: '干饭人', avatar: '饭', text: '看饿了，牛腩炖多久才软烂呀？', likes: 18, liked: false }
+    ]
   }
 ]

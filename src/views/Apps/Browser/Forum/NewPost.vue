@@ -97,8 +97,8 @@ label { display: block; font-size: 13px; font-weight: 500; margin: 16px 0 8px; }
 .editor { border: 1px solid #d5dcdb; border-radius: 4px; overflow: hidden; }
 .editor-toolbar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: #f4f6f6; border-bottom: 1px solid #d5dcdb; }
 .editor-toolbar button { border: 1px solid #d5dcdb; background: #fff; border-radius: 3px; padding: 3px 9px; font-size: 12px; }
-.editor-toolbar .disabled-btn { cursor: default; color: #aaa; }
-.editor-toolbar .disabled-btn:hover { background: #fff; }
+.editor-toolbar .disabled-btn { cursor: default; color: #3a4a52; }
+.editor-toolbar .disabled-btn:hover { background: #fff; border-color: #d5dcdb; }
 .tool-hint { margin-left: auto; font-size: 10px; color: #a5b0b3; }
 .editor textarea { width: 100%; height: 180px; resize: vertical; border: 0; padding: 10px; font-size: 13px; line-height: 1.7; outline: none; }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }

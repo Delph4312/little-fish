@@ -3,14 +3,18 @@ import { reactive, ref } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import { images } from '@/data/images'
 
-defineProps({
+const props = defineProps({
   moments: { type: Array, default: () => [] },
   cover: { type: String, default: '' }
 })
 const game = useGameStore()
 
 // 每条动态的点赞状态（是否已点赞）与追加评论
+// 数据里 likes 已包含「谢遥」的动态，初始就显示已点赞（♥ 深色实心）
 const liked = reactive({})
+props.moments.forEach((m, i) => {
+  if ((m.likes || []).includes('谢遥')) liked[i] = true
+})
 const extraComments = reactive({})
 const commentOpen = ref(null)
 const commentText = ref('')
@@ -64,17 +68,17 @@ function displayLikes(m, i) {
 <template>
   <div class="moments">
     <div class="cover">
-      <div class="cover-scene" :style="{ background: `url(${images.moments.seawall}) center/cover` }"></div>
+      <div class="cover-scene" v-lazy-bg="images.moments.seawall"></div>
       <div class="cover-name">谢遥</div>
     </div>
     <div class="feed">
       <div v-for="(m, i) in moments" :key="i" class="moment">
-        <div class="m-avatar" :style="avatarUrl(m.user) ? { backgroundImage: `url(${avatarUrl(m.user)})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">{{ avatarUrl(m.user) ? '' : m.avatarText }}</div>
+        <div class="m-avatar" v-lazy-bg="avatarUrl(m.user) || ''">{{ avatarUrl(m.user) ? '' : m.avatarText }}</div>
         <div class="m-body">
           <div class="m-user">{{ m.user }}</div>
           <div class="m-text">{{ m.text }}</div>
           <div v-if="m.images && m.images.length" class="m-images">
-            <div v-for="(img, j) in m.images" :key="j" class="m-img" :style="imgUrl(img) ? { backgroundImage: `url(${imgUrl(img)})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">{{ imgUrl(img) ? '' : img }}</div>
+            <div v-for="(img, j) in m.images" :key="j" class="m-img" v-lazy-bg="imgUrl(img) || ''">{{ imgUrl(img) ? '' : img }}</div>
           </div>
           <div class="m-meta">
             <span>{{ m.time }}</span>

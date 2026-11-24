@@ -66,7 +66,7 @@ function sendReply(i) {
         <template v-if="i === 0 && p.startsWith('2025年11月23日')"><b>{{ datePrefix }}</b>{{ p.slice(datePrefix.length) }}</template>
         <template v-else>{{ p }}</template>
       </p>
-      <div class="article-img" :style="{ background: `url(${articleImg}) center/cover` }"></div>
+      <div class="article-img" v-lazy-bg="articleImg"></div>
     </div>
     <div class="comments" v-if="!article.commentsClosed">
       <div class="c-title">评论区 {{ article.commentCount }}条</div>

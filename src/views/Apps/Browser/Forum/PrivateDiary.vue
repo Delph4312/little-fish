@@ -53,9 +53,7 @@ function openPlan() {
     <div v-if="!unlocked" class="lock">
       <div class="lock-icon">🔒</div>
       <h2>私人日记</h2>
-      <p class="muted">{{ diaryMeta.hint }}</p>
-      <p class="tip">{{ diaryMeta.passwordHint }}</p>
-      <input v-model="pwd" type="password" placeholder="输入日期密码" @keyup.enter="unlock" />
+      <input v-model="pwd" type="password" placeholder="请输入密码" @keyup.enter="unlock" />
       <button class="btn btn-primary" @click="unlock">解锁</button>
       <div v-if="err" class="err">密码错误</div>
     </div>
@@ -91,10 +89,9 @@ function openPlan() {
 .bar button { border: 0; background: transparent; color: #2f6f8f; cursor: pointer; }
 .lock { max-width: 420px; margin: 70px auto; text-align: center; background: #fff; padding: 36px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.08); }
 .lock-icon { font-size: 40px; }
-.lock h2 { font-size: 18px; font-weight: 500; margin: 14px 0 6px; }
+.lock h2 { font-size: 18px; font-weight: 500; margin: 14px 0 4px; }
 .lock p { font-size: 12px; line-height: 1.6; }
-.lock .tip { color: #8e6a3a; margin-top: 12px; }
-.lock input { display: block; width: 100%; margin: 22px 0 12px; padding: 9px; border: 1px solid #d5dcdb; border-radius: 4px; text-align: center; }
+.lock input { display: block; width: 100%; margin: 14px 0 12px; padding: 9px; border: 1px solid #d5dcdb; border-radius: 4px; text-align: center; }
 .err { color: #b23b3b; font-size: 12px; margin-top: 10px; }
 .pages { max-width: 700px; margin: 0 auto; padding: 24px 20px 40px; }
 .entry { background: #fff; border-radius: 5px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.04); }

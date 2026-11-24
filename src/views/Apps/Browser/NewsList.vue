@@ -9,9 +9,8 @@ const newsImg = {
   1: images.news.star, 2: images.news.job, 3: images.news.wage,
   4: images.news.fall, 5: images.news.rights, 6: images.news.shop, 7: images.news.rights
 }
-function thumbStyle(id) {
-  const u = newsImg[id]
-  return u ? { background: `url(${u}) center/cover` } : {}
+function thumbUrl(id) {
+  return newsImg[id] || ''
 }
 
 const props = defineProps({
@@ -112,7 +111,7 @@ function navClickable(n) {
             <span class="date">{{ 1 }} 篇文章</span>
           </div>
           <div class="fav-card" @click="emit('open', crashReport.id)">
-            <div class="fav-thumb" :style="{ background: `url(${images.news.crash}) center/cover` }"></div>
+            <div class="fav-thumb" v-lazy-bg="images.news.crash"></div>
             <div class="fav-body">
               <div class="fav-title">{{ crashReport.title }}</div>
               <div class="fav-summary">{{ crashReport.paragraphs[0] }}</div>
@@ -129,7 +128,7 @@ function navClickable(n) {
           </div>
           <div class="list">
             <div v-for="item in news" :key="item.id" class="item" @click="emit('open', item.id)">
-              <div class="thumb" :style="thumbStyle(item.id)"></div>
+              <div class="thumb" v-lazy-bg="thumbUrl(item.id)"></div>
               <div class="item-body">
                 <div class="item-title">{{ item.title }}</div>
                 <div class="item-summary">{{ item.summary }}</div>

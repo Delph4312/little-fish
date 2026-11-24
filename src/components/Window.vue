@@ -50,25 +50,26 @@ function onBarPointerDown(e) {
   document.addEventListener('pointerup', onUp)
 }
 
-// 边缘/角落缩放：pointer capture 保证拖出窗口也不丢事件
+// 边缘/角落缩放：document 级监听，和标题栏拖动同一套机制，
+// 避免 pointer capture 被应用内部元素抢走导致拖不动。
 function onResizePointerDown(e, dir) {
   if (e.button !== 0 || props.win.maximized) return
   e.stopPropagation()
   e.preventDefault()
   system.focusWindow(props.win.id)
   resizing.value = true
-  const el = e.currentTarget
-  try { el.setPointerCapture(e.pointerId) } catch (_) {}
-
   const startX = e.clientX
   const startY = e.clientY
   const start = { x: props.win.x, y: props.win.y, w: props.win.w, h: props.win.h }
-  const minW = 360
-  const minH = 240
-  const hasL = dir.includes('l')
-  const hasT = dir.includes('t')
-  const hasR = dir.includes('r')
-  const hasB = dir.includes('b')
+  const minW = 320
+  const minH = 220
+  const hasL = dir.includes('w')
+  const hasT = dir.includes('n')
+  const hasR = dir.includes('e')
+  const hasB = dir.includes('s')
+  // dir 形如 n/s/w/e/nw/ne/sw/se：左右看 w/e，上下看 n/s
+  document.body.style.userSelect = 'none'
+  document.body.style.cursor = window.getComputedStyle(e.currentTarget).cursor || ''
 
   function onMove(ev) {
     const dx = ev.clientX - startX
@@ -93,13 +94,15 @@ function onResizePointerDown(e, dir) {
   }
   function onUp() {
     resizing.value = false
-    el.removeEventListener('pointermove', onMove)
-    el.removeEventListener('pointerup', onUp)
-    el.removeEventListener('pointercancel', onUp)
+    document.removeEventListener('pointermove', onMove)
+    document.removeEventListener('pointerup', onUp)
+    document.removeEventListener('pointercancel', onUp)
+    document.body.style.userSelect = ''
+    document.body.style.cursor = ''
   }
-  el.addEventListener('pointermove', onMove)
-  el.addEventListener('pointerup', onUp)
-  el.addEventListener('pointercancel', onUp)
+  document.addEventListener('pointermove', onMove)
+  document.addEventListener('pointerup', onUp)
+  document.addEventListener('pointercancel', onUp)
 }
 </script>
 
@@ -150,15 +153,15 @@ function onResizePointerDown(e, dir) {
   height: 100% !important;
   border-radius: 0;
 }
-/* 手柄命中区加宽到 12px，覆盖窗口边缘；z-index 200 高于应用浮层 */
+/* 手柄命中区加宽到 14px，覆盖窗口边缘；z-index 200 高于应用浮层 */
 .rs { position: absolute; z-index: 200; touch-action: none; }
-.rs-n, .rs-s { left: 14px; right: 14px; height: 12px; cursor: ns-resize; }
+.rs-n, .rs-s { left: 16px; right: 16px; height: 14px; cursor: ns-resize; }
 .rs-n { top: 0; }
 .rs-s { bottom: 0; }
-.rs-w, .rs-e { top: 14px; bottom: 14px; width: 12px; cursor: ew-resize; }
+.rs-w, .rs-e { top: 16px; bottom: 16px; width: 14px; cursor: ew-resize; }
 .rs-w { left: 0; }
 .rs-e { right: 0; }
-.rs-nw, .rs-ne, .rs-sw, .rs-se { width: 24px; height: 24px; }
+.rs-nw, .rs-ne, .rs-sw, .rs-se { width: 28px; height: 28px; }
 .rs-nw { top: 0; left: 0; cursor: nwse-resize; }
 .rs-ne { top: 0; right: 0; cursor: nesw-resize; }
 .rs-sw { bottom: 0; left: 0; cursor: nesw-resize; }

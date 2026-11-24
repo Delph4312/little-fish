@@ -73,7 +73,6 @@ function sendComment(note) {
           <input v-model="keyword" placeholder="搜索你感兴趣的内容" />
           <button @click="() => {}">🔍</button>
         </div>
-        <div class="top-user"><span class="tu-av">我</span></div>
       </header>
 
       <!-- 笔记流 -->
@@ -178,7 +177,8 @@ function sendComment(note) {
 .note-stats { display: flex; gap: 12px; padding: 8px 12px 12px; font-size: 11px; color: #999; }
 .note-stats .on { color: #ff2442; }
 .detail-content { padding-top: 12px; }
-.detail-back { border: 0; background: transparent; color: #ff2442; font-size: 13px; cursor: pointer; padding: 6px 0 14px; }
+.detail-back { border: 0; background: transparent; color: #222; font-size: 13px; cursor: pointer; padding: 6px 0 14px; }
+.detail-back:hover { color: #000; }
 .detail-card { max-width: 640px; margin: 0 auto; border: 1px solid #f0f0f0; border-radius: 12px; overflow: hidden; }
 .detail-cover { height: 220px; }
 .detail-body { padding: 22px 26px 28px; }

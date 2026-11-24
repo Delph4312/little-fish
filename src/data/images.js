@@ -5,34 +5,34 @@
 const img = (name) => `${import.meta.env.BASE_URL}images/${name}`
 
 export const images = {
-  desktopBg: img('desktop-bg.png'),
-  lockscreenBg: img('lockscreen-bg.png'),
+  desktopBg: img('desktop-bg.webp'),
+  lockscreenBg: img('lockscreen-bg.webp'),
   avatar: {
-    xieyao: img('xieyao-avatar.png'),
-    sister: img('sister-avatar.png'),
-    dad: img('dad-avatar.png'),
-    mom: img('mom-avatar.png'),
-    teacher: img('teacher-avatar.png'),
-    whale: img('whale-avatar.png')
+    xieyao: img('xieyao-avatar.webp'),
+    sister: img('sister-avatar.webp'),
+    dad: img('dad-avatar.webp'),
+    mom: img('mom-avatar.webp'),
+    teacher: img('teacher-avatar.webp'),
+    whale: img('whale-avatar.webp')
   },
   moments: {
-    coffee: img('moments-coffee.png'),
-    potato: img('moments-potato.png'),
-    home: img('moments-home.png'),
-    seawall: img('moments-seawall.png')
+    coffee: img('moments-coffee.webp'),
+    potato: img('moments-potato.webp'),
+    home: img('moments-home.webp'),
+    seawall: img('moments-seawall.webp')
   },
   news: {
-    shop: img('news-shop.png'),
-    job: img('news-job.png'),
-    wage: img('news-wage.png'),
-    star: img('news-star.png'),
-    rights: img('news-rights.png'),
-    fall: img('news-fall.png'),
-    crash: img('news-crash.png'),
-    crashIllustration: img('crash-illustration.png')
+    shop: img('news-shop.webp'),
+    job: img('news-job.webp'),
+    wage: img('news-wage.webp'),
+    star: img('news-star.webp'),
+    rights: img('news-rights.webp'),
+    fall: img('news-fall.webp'),
+    crash: img('news-crash.webp'),
+    crashIllustration: img('crash-illustration.webp')
   },
   forum: {
-    banner: img('forum-banner.png'),
+    banner: img('forum-banner.webp'),
     logo: img('forum-logo.png')
   }
 }

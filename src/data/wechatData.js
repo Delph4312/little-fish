@@ -141,12 +141,12 @@ export const moments = [
     text: '海边的灯亮到很晚。', visibility: '仅自己可见', images: ['远处防波堤夜景']
   },
   {
-    user: '妈妈', avatarText: '妈', time: '去年10月3日 20:02',
+    user: '妈妈', avatarText: '妈', time: '2025年10月3日 20:02',
     text: '降温了，两个孩子记得穿厚点。小遥别老熬夜，晴晴在外面别舍不得吃饭。',
-    images: ['一桌家常菜'], likes: ['谢遥', '谢晴']
+    images: [], likes: ['谢遥', '谢晴']
   },
   {
-    user: '爸爸', avatarText: '爸', time: '去年9月18日 18:36',
+    user: '爸爸', avatarText: '爸', time: '2025年9月18日 18:36',
     text: '今天收工早，炒了个土豆丝，你妈嫌咸。下次少放盐。',
     images: ['一盘土豆丝'],
     comments: [
@@ -155,9 +155,9 @@ export const moments = [
     ]
   },
   {
-    user: '谢晴', avatarText: '晴', time: '去年6月7日 22:41',
+    user: '谢晴', avatarText: '晴', time: '2025年6月7日 22:41',
     text: '小遥高考一年倒计时，姐比他还紧张。',
-    images: ['书桌和台灯'],
+    images: [],
     comments: [
       { user: '谢遥', text: '姐，你别紧张。' },
       { user: '谢晴', text: '回复 谢遥：你才别紧张。' }

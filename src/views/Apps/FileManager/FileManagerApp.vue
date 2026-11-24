@@ -45,6 +45,15 @@ const toast = ref('')
 const openedFile = ref(null)
 let toastTimer
 
+// 工具栏「查看」下拉菜单
+const viewMenuOpen = ref(false)
+const showHidden = ref(false)   // 显示隐藏的项目
+const viewMode = ref('icons')   // icons | list
+function toggleViewMenu() { viewMenuOpen.value = !viewMenuOpen.value }
+function toggleHidden() { showHidden.value = !showHidden.value }
+function setViewMode(m) { viewMode.value = m }
+function refreshView() { viewMenuOpen.value = false; showToast('已刷新。') }
+
 const drives = [
   { name: '本地磁盘 (C:)', key: 'C:', free: '42.1 GB 可用，共 68.0 GB', used: 0.62 },
   { name: '本地磁盘 (D:)', key: 'D:', free: '128 GB 可用，共 180 GB', used: 0.29 }
@@ -98,7 +107,7 @@ const searchResults = computed(() => {
 })
 
 const currentFolders = computed(() => folders[location.value] || [])
-const currentFiles = computed(() => (files[location.value] || []).filter((f) => !f.hidden))
+const currentFiles = computed(() => (files[location.value] || []).filter((f) => showHidden.value || !f.hidden))
 
 function goLocation(loc) {
   location.value = loc
@@ -171,7 +180,21 @@ onUnmounted(() => clearTimeout(toastTimer))
         <button title="剪切" @click="doCut">✂</button>
         <button title="复制" @click="doCopy">⧉</button>
         <button title="粘贴" @click="doPaste">📋</button>
-        <button title="查看" @click="doView">👁</button>
+        <div class="view-wrap">
+          <button title="查看" @click="toggleViewMenu">👁</button>
+          <div v-if="viewMenuOpen" class="view-menu">
+            <div class="vm-title">查看</div>
+            <div class="vm-item" @click="toggleHidden">
+              <span class="vm-check">{{ showHidden ? '☑' : '☐' }}</span> 显示隐藏的项目
+            </div>
+            <div class="vm-sep"></div>
+            <div class="vm-item" :class="{ on: viewMode === 'icons' }" @click="setViewMode('icons')">▦ 大图标</div>
+            <div class="vm-item" :class="{ on: viewMode === 'list' }" @click="setViewMode('list')">☰ 详细信息</div>
+            <div class="vm-sep"></div>
+            <div class="vm-item" @click="doView">↗ 打开选中项</div>
+            <div class="vm-item" @click="refreshView">↻ 刷新</div>
+          </div>
+        </div>
         <button title="删除" @click="doDelete">🗑</button>
       </div>
       <div class="search-wrap">
@@ -233,7 +256,7 @@ onUnmounted(() => clearTimeout(toastTimer))
             </div>
           </div>
           <div class="section-label">文件</div>
-          <div class="file-grid">
+          <div class="file-grid" :class="{ list: viewMode === 'list' }">
             <div
               v-for="f in currentFiles"
               :key="f.name"
@@ -278,6 +301,14 @@ onUnmounted(() => clearTimeout(toastTimer))
 .tool-actions { display: flex; gap: 2px; }
 .tool-actions button { width: 28px; height: 26px; border: 1px solid transparent; background: transparent; border-radius: 4px; font-size: 13px; }
 .tool-actions button:hover { background: #eef2f1; border-color: #d5dcdb; }
+.view-wrap { position: relative; }
+.view-menu { position: absolute; top: 30px; left: 0; z-index: 300; width: 178px; background: #fff; border: 1px solid #d5dcdb; border-radius: 6px; box-shadow: 0 8px 22px rgba(0,0,0,.16); padding: 6px 0; }
+.vm-title { padding: 4px 14px 8px; font-size: 11px; color: #9aa7ab; font-weight: 500; }
+.vm-item { padding: 7px 14px; font-size: 12px; color: #39474d; cursor: pointer; white-space: nowrap; }
+.vm-item:hover { background: #eef4f7; }
+.vm-item.on { color: #2f6f8f; font-weight: 500; }
+.vm-check { display: inline-block; width: 16px; color: #2f6f8f; }
+.vm-sep { height: 1px; background: #eef1f0; margin: 4px 0; }
 .search-wrap { position: relative; display: flex; align-items: center; }
 .search-ico { position: absolute; left: 8px; font-size: 12px; opacity: .6; }
 .search { padding: 6px 10px 6px 26px; border: 1px solid #d5dcdb; border-radius: 4px; font-size: 12px; width: 170px; }
@@ -302,6 +333,11 @@ onUnmounted(() => clearTimeout(toastTimer))
 .folder.selectable:hover { background: #f0f5f5; }
 .folder-icon { font-size: 34px; }
 .file-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.file-grid.list { flex-direction: column; gap: 0; }
+.file-grid.list .file { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; padding: 7px 10px; border-radius: 0; border-bottom: 1px solid #eef1f0; }
+.file-grid.list .file-icon { font-size: 18px; }
+.file-grid.list .file-name { margin: 0; flex: 1; }
+.file-grid.list .file-size { margin: 0; }
 .file { width: 96px; text-align: center; font-size: 11px; padding: 8px 4px; border-radius: 4px; cursor: pointer; }
 .file:hover { background: #f0f5f5; }
 .file.clickable { outline: 1px dashed #9fc4d4; }

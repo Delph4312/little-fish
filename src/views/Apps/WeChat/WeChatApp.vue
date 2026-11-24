@@ -16,7 +16,8 @@ const game = useGameStore()
 const system = useSystemStore()
 const activeNav = ref('聊天')
 const activeConv = ref(null) // 刚进入时不选中任何会话（姐姐对话需玩家主动点开）
-const loggedIn = ref(false)
+// 登录状态以 game store 为准：关闭窗口再打开仍保持已登录
+const loggedIn = computed(() => game.wechatLoggedIn)
 const password = ref('')
 const loginError = ref(false)
 const showHint = ref(false)
@@ -24,10 +25,9 @@ const hintText = ref('')
 const searchText = ref('')
 
 const conv = computed(() => conversations[activeConv.value])
-function avatarStyle(c) {
+function avatarUrl(c) {
   const key = c.avatarKey
-  const url = key && images.avatar[key]
-  return url ? { backgroundImage: `url(${url})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}
+  return (key && images.avatar[key]) || ''
 }
 
 // 会话列表：小岛老师需先搜索添加才显示
@@ -47,7 +47,6 @@ function doLogin() {
     setTimeout(() => (loginError.value = false), 1600)
     return
   }
-  loggedIn.value = true
   game.wechatLoggedIn = true
   game.addClue('wechat-favorites')
   // 不再弹登录系统提示
@@ -70,8 +69,15 @@ function navTo(item) {
 // 搜索微信号：命中风前屿则弹出个人信息/好友申请窗口
 const showApply = ref(false)
 const remark = ref('')
-function doSearch() {
-  const q = searchText.value.trim().toLowerCase()
+const applyMessage = ref('')
+function fillRemark() {
+  remark.value = contactApplication.remark
+}
+function fillMessage() {
+  applyMessage.value = contactApplication.message
+}
+function doSearch(text) {
+  const q = (typeof text === 'string' ? text : searchText.value).trim().toLowerCase()
   if (!q) return
   if ((q === contactApplication.wechatId.toLowerCase() || q.includes('风前屿')) && !game.teacherAdded) {
     remark.value = ''
@@ -80,9 +86,6 @@ function doSearch() {
   } else {
     system.notify({ from: '微信', text: '没有找到相关用户。' })
   }
-}
-function fillRemark() {
-  remark.value = contactApplication.remark
 }
 function submitApply() {
   game.teacherAdded = true
@@ -113,7 +116,7 @@ function usePlugin() {
   <div class="wechat" v-if="loggedIn">
     <aside class="rail">
       <div class="me">
-        <div class="avatar">{{ wechatAccount.avatarText }}</div>
+        <div class="avatar" :style="{ backgroundImage: `url(${images.avatar.xieyao})`, backgroundSize: 'cover', backgroundPosition: 'center' }"></div>
       </div>
       <div class="rail-icons">
         <button
@@ -144,7 +147,7 @@ function usePlugin() {
             :class="{ active: activeConv === c.id }"
             @click="openConv(c.id)"
           >
-            <div class="conv-avatar" :style="avatarStyle(c)">{{ c.avatarKey ? '' : c.avatarText }}</div>
+            <div class="conv-avatar" v-lazy-bg="avatarUrl(c)">{{ c.avatarKey ? '' : c.avatarText }}</div>
             <div class="conv-main">
               <div class="conv-top">
                 <span class="conv-name">{{ c.name }}</span>
@@ -157,13 +160,13 @@ function usePlugin() {
         </div>
       </template>
       <template v-else-if="activeNav === '通讯录'">
-        <Contacts @add-teacher="game.teacherAdded = true" />
+        <Contacts @search="doSearch" @add-teacher="game.teacherAdded = true" />
       </template>
       <div v-else class="pane-title">{{ activeNav }}</div>
     </section>
 
     <main class="chat-pane">
-      <ChatWindow v-if="activeNav === '聊天'" :conv="conv" :conv-name="conv ? conv.name : ''" />
+      <ChatWindow v-if="activeNav === '聊天'" :conv="conv" :conv-id="activeConv" :conv-name="conv ? conv.name : ''" />
       <Moments v-else-if="activeNav === '朋友圈'" :moments="moments" :cover="momentsCover" />
       <Favorites v-else-if="activeNav === '收藏'" :items="favorites" />
       <div v-else class="placeholder">{{ activeNav }}（占位）</div>
@@ -195,7 +198,7 @@ function usePlugin() {
           <div class="apply-row"><span class="k">微信名</span><span class="v">{{ contactApplication.wechatName }}</span></div>
           <div class="apply-row"><span class="k">微信号</span><span class="v">{{ contactApplication.wechatId }}</span></div>
           <div class="apply-row clickable" @click="fillRemark"><span class="k">备注</span><span class="v" :class="{ filled: remark }">{{ remark || '点击此处填写备注' }}</span></div>
-          <div class="apply-row"><span class="k">申请信息</span><span class="v msg">{{ contactApplication.message }}</span></div>
+          <div class="apply-row clickable" @click="fillMessage"><span class="k">申请信息</span><span class="v msg" :class="{ filled: applyMessage }">{{ applyMessage || '点击此处填写申请信息' }}</span></div>
         </div>
         <div class="apply-actions">
           <button class="btn" @click="showApply = false">取消</button>
