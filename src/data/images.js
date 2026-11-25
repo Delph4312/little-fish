@@ -13,7 +13,10 @@ export const images = {
     dad: img('dad-avatar.webp'),
     mom: img('mom-avatar.webp'),
     teacher: img('teacher-avatar.webp'),
-    whale: img('whale-avatar.webp')
+    whale: img('whale-avatar.webp'),
+    headTeacher: img('head-teacher.webp'),
+    classmateA: img('classmate-a.webp'),
+    classmateB: img('classmate-b.webp')
   },
   moments: {
     coffee: img('moments-coffee.webp'),
@@ -29,7 +32,8 @@ export const images = {
     rights: img('news-rights.webp'),
     fall: img('news-fall.webp'),
     crash: img('news-crash.webp'),
-    crashIllustration: img('crash-illustration.webp')
+    crashIllustration: img('crash-illustration.webp'),
+    youth: img('news-youth.webp')
   },
   forum: {
     banner: img('forum-banner.webp'),

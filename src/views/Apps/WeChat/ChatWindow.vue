@@ -31,7 +31,10 @@ const avatarMap = {
   '爸爸': images.avatar.dad,
   '妈妈': images.avatar.mom,
   '小岛老师': images.avatar.teacher,
-  '鲸鱼先生': images.avatar.whale
+  '鲸鱼先生': images.avatar.whale,
+  '班主任': images.avatar.headTeacher,
+  '同学A': images.avatar.classmateA,
+  '同学B': images.avatar.classmateB
 }
 function avatarOf(m) {
   if (m.from === 'me') return images.avatar.xieyao

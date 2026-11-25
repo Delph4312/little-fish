@@ -13,6 +13,7 @@ const articleImg = computed(() => {
   if (t.includes('坠楼')) return images.news.fall
   if (t.includes('伤人')) return images.news.rights
   if (t.includes('商业街') || t.includes('店铺')) return images.news.shop
+  if (t.includes('青少年') || t.includes('沉默的求救')) return images.news.youth
   return images.news.rights
 })
 const emit = defineEmits(['back'])

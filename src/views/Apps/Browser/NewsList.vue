@@ -7,7 +7,7 @@ import { images } from '@/data/images'
 
 const newsImg = {
   1: images.news.star, 2: images.news.job, 3: images.news.wage,
-  4: images.news.fall, 5: images.news.rights, 6: images.news.shop, 7: images.news.rights
+  4: images.news.fall, 5: images.news.rights, 6: images.news.shop, 7: images.news.youth
 }
 function thumbUrl(id) {
   return newsImg[id] || ''
