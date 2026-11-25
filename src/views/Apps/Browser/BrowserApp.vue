@@ -192,18 +192,26 @@ function doWxLogin() {
     <div class="bookmark-bar">
       <template v-for="b in visibleBookmarks" :key="b.name">
         <span
-          class="bm-item"
-          :class="{ jump: canOpenBookmark(b), disabled: !canOpenBookmark(b) }"
-          :title="canOpenBookmark(b) ? `打开 ${b.name}` : `${b.name}（暂未接入）`"
+          v-if="canOpenBookmark(b)"
+          class="bm-item jump"
+          :title="`打开 ${b.name}`"
           @click="openBookmark(b)"
         >🔖 {{ b.name }}</span>
+        <span
+          v-else
+          class="bm-item disabled"
+          :title="`${b.name}（暂未接入，点击查看提示）`"
+          @click="openBookmark(b)"
+        ><span class="bm-dis-text">🔖 {{ b.name }}</span></span>
       </template>
     </div>
 
-    <!-- 不可跳转书签的右下角提示窗（浏览器内部，确保可见） -->
-    <transition name="bmfade">
-      <div v-if="bmToast" class="bm-toast">{{ bmToast }}</div>
-    </transition>
+    <!-- 不可跳转书签的右下角提示窗（挂到 body 层级，避免被窗口内浮层遮挡） -->
+    <Teleport to="body">
+      <transition name="bmfade">
+        <div v-if="bmToast" class="bm-toast">{{ bmToast }}</div>
+      </transition>
+    </Teleport>
 
     <div class="page" ref="pageEl">
       <template v-if="active">
@@ -248,14 +256,17 @@ function doWxLogin() {
 .wx-avatar { width: 28px; height: 28px; border-radius: 50%; background: #cfe6d6; color: #2b5c3a; display: grid; place-items: center; font-size: 13px; user-select: none; }
 .bookmark-bar { height: 30px; flex: 0 0 30px; display: flex; align-items: center; gap: 16px; padding: 0 12px; background: #fafbfb; border-bottom: 1px solid #eef1f0; overflow-x: auto; white-space: nowrap; }
 /* 可跳转书签：正常深色、手型、蓝色 hover */
-.bm-item { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid transparent; cursor: pointer; }
+.bm-item { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid transparent; cursor: pointer; white-space: nowrap; }
 .bm-item.jump { color: #1f4e63; }
 .bm-item.jump:hover { color: #2f6f8f; background: #eef4f7; border-color: #cfe0e9; }
-/* 不可跳转书签：明显灰化 + 虚线下划线 + 禁用光标，hover 有提示反馈 */
-.bm-item.disabled { color: #b3bdc0; text-decoration: line-through; text-decoration-color: #cdd5d7; cursor: not-allowed; }
-.bm-item.disabled:hover { color: #7d8b8f; background: #f4f6f6; border-color: #e2e7e6; text-decoration: underline dotted; }
-.bm-toast { position: absolute; right: 16px; bottom: 16px; background: rgba(28,36,41,.94); color: #fff; font-size: 12px; padding: 10px 16px; border-radius: 6px; z-index: 500; box-shadow: 0 6px 18px rgba(0,0,0,.3); max-width: 280px; }
-.bmfade-enter-active, .bmfade-leave-active { transition: opacity .2s; }
-.bmfade-enter-from, .bmfade-leave-to { opacity: 0; }
+/* 不可跳转书签：明显灰化 + 删除线（伪元素横线，确保可见）+ 虚线框，hover 有反馈 */
+.bm-item.disabled { position: relative; color: #aab4b7; cursor: not-allowed; background: #f2f4f4; border-color: #e6eaea; }
+.bm-dis-text { position: relative; display: inline-block; }
+.bm-dis-text::after { content: ""; position: absolute; left: -1px; right: -1px; top: 50%; height: 1.5px; background: #c0392b; transform: rotate(-6deg); transform-origin: center; }
+.bm-item.disabled:hover { color: #8a969a; border-color: #cfd6d8; background: #eceff0; }
+/* 右下角提示窗：Teleport 到 body，固定定位 + 最高层级，确保任何页面都能看到 */
+.bm-toast { position: fixed; right: 24px; bottom: 24px; background: rgba(28,36,41,.96); color: #fff; font-size: 12px; padding: 12px 18px; border-radius: 6px; z-index: 2147483647; box-shadow: 0 8px 24px rgba(0,0,0,.4); max-width: 300px; border-left: 3px solid #e6a23c; }
+.bmfade-enter-active, .bmfade-leave-active { transition: opacity .25s, transform .25s; }
+.bmfade-enter-from, .bmfade-leave-to { opacity: 0; transform: translateY(12px); }
 .page { flex: 1; overflow: auto; }
 </style>

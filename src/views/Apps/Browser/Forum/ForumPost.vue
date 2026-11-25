@@ -4,7 +4,13 @@ import { useGameStore } from '@/stores/gameStore'
 import { useSystemStore } from '@/stores/systemStore'
 
 const props = defineProps({ post: { type: Object, default: null } })
-const emit = defineEmits(['back', 'open-profile'])
+const emit = defineEmits(['back', 'open-profile', 'navigate'])
+
+// 右侧栏：快捷入口 + 今日热度榜（与论坛主页一致）
+const hotList = [
+  { title: '-', replies: 71 }, { title: '-', replies: 40 }, { title: '-', replies: 97 },
+  { title: '-', replies: 60 }, { title: '-', replies: 73 }
+]
 const game = useGameStore()
 const system = useSystemStore()
 
@@ -41,12 +47,16 @@ const preparedComments = computed(() => {
     date: c.date || c.time || commentDateFor(idx)
   }))
   kept.sort((a, b) => dateValue(a.date) - dateValue(b.date))
-  // 不足补空白评论
+  // 不足补空白评论（先补齐，再把用户新回复统一挪到最底端，保证最新回复永远在最后）
   let fillIdx = 0
   const blankLikes = [38, 61, 86, 59, 57, 73, 11]
   while (kept.length < commentPageSize) {
     kept.push({ user: '-', text: '-', blank: true, likes: blankLikes[fillIdx % blankLikes.length], date: commentDateFor(kept.length) })
     fillIdx++
+  }
+  const mineTail = kept.filter((c) => c.mine && !c.isSubReply)
+  if (mineTail.length) {
+    kept = kept.filter((c) => !(c.mine && !c.isSubReply)).concat(mineTail)
   }
   return kept
 })
@@ -160,9 +170,17 @@ function isLinkUser(name) {
 <template>
   <div class="post-detail" v-if="post">
     <div class="bar"><button @click="emit('back')">‹ 返回列表</button><span>{{ post.section }}</span></div>
-    <div class="wrap">
+    <div class="detail-layout">
+      <div class="wrap">
       <h1>{{ post.title }}</h1>
-      <div class="meta">楼主：{{ post.author }} · 发表于 {{ post.time }}</div>
+      <div class="meta">楼主：
+        <b
+          class="post-author"
+          :class="{ link: isLinkUser(post.author) }"
+          @click="isLinkUser(post.author) && emit('open-profile', post.author)"
+        >{{ post.author }}</b>
+        · 发表于 {{ post.time }}
+      </div>
       <p v-for="(line, i) in post.content" :key="i" class="para">{{ line }}</p>
       <div class="stats">
         <span class="act" :class="{ on: postLiked }" @click="togglePostLike">👍 {{ displayLikes }}</span>
@@ -218,7 +236,29 @@ function isLinkUser(name) {
           </div>
         </template>
       </div>
-    </div>
+      </div><!-- /wrap -->
+
+      <!-- 右侧栏：快捷入口 + 今日热度榜 -->
+      <aside class="detail-side">
+        <div class="side-card">
+          <div class="side-card-title">快捷入口</div>
+          <div class="quick-grid">
+            <div class="quick" @click="emit('navigate', 'bottle')"><span class="qc">🍾</span>漂流瓶</div>
+            <div class="quick" @click="emit('navigate', '求助')"><span class="qc">🆘</span>求助</div>
+            <div class="quick" @click="emit('navigate', '生活')"><span class="qc">🌱</span>生活</div>
+            <div class="quick" @click="emit('navigate', '闲聊')"><span class="qc">💬</span>闲聊</div>
+          </div>
+        </div>
+        <div class="side-card">
+          <div class="side-card-title">🔥 今日热度榜</div>
+          <div v-for="(p, i) in hotList" :key="i" class="hot-row">
+            <span class="rank" :class="{ top: i < 3 }">{{ i + 1 }}</span>
+            <span class="hot-title">{{ p.title }}</span>
+            <span class="hot-replies">{{ p.replies }}</span>
+          </div>
+        </div>
+      </aside>
+    </div><!-- /detail-layout -->
   </div>
 </template>
 
@@ -226,7 +266,26 @@ function isLinkUser(name) {
 .post-detail { min-height: 100%; background: #fff; }
 .bar { display: flex; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid #eef1f0; font-size: 12px; color: #6b7b82; }
 .bar button { border: 0; background: transparent; color: #2f6f8f; cursor: pointer; font-size: 12px; }
-.wrap { max-width: 720px; margin: 0 auto; padding: 24px 20px; }
+/* 帖子详情两栏：内容卡片靠左，右侧保留侧栏；随窗口响应式缩放 */
+.detail-layout { display: flex; gap: clamp(12px, 1.6vw, 24px); width: 100%; max-width: 1600px; margin: 0 auto; padding: clamp(12px, 1.6vw, 26px); align-items: flex-start; box-sizing: border-box; }
+.wrap { flex: 1; min-width: 0; max-width: 900px; margin: 0; padding: 4px 0; box-sizing: border-box; }
+.detail-side { width: clamp(220px, 22vw, 320px); flex: 0 0 clamp(220px, 22vw, 320px); display: flex; flex-direction: column; gap: 14px; }
+.side-card { background: #fafbfb; border: 1px solid #e2e7e6; border-radius: 6px; padding: 14px; }
+.side-card-title { font-size: 13px; font-weight: 600; color: #2c3e46; margin-bottom: 12px; }
+.quick-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.quick { display: flex; align-items: center; gap: 6px; padding: 10px; background: #f2f5f4; border-radius: 5px; font-size: 12px; cursor: pointer; }
+.quick:hover { background: #e1ecef; }
+.qc { font-size: 16px; }
+.hot-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f3f3; font-size: 12px; }
+.rank { width: 18px; text-align: center; color: #9aa7ab; }
+.rank.top { color: #b23b3b; font-weight: 600; }
+.hot-title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #4a5b62; }
+.hot-replies { color: #a5b0b3; font-size: 11px; }
+@media (max-width: 900px) { .detail-layout { flex-direction: column; } .detail-side { width: 100%; flex: 1 1 auto; flex-direction: row; flex-wrap: wrap; } .detail-side .side-card { flex: 1 1 240px; } }
+/* 楼主名：与评论区用户名同色号，鲸鱼先生等可跳转主页 */
+.post-author { color: #4a6d8c; font-weight: 500; }
+.post-author.link { cursor: pointer; }
+.post-author.link:hover { text-decoration: underline; }
 h1 { font-size: 20px; font-weight: 600; line-height: 1.5; margin: 0 0 10px; }
 .meta { font-size: 12px; color: #a5b0b3; margin-bottom: 22px; }
 .para { font-size: 14px; line-height: 2; color: #2b373d; margin: 0 0 14px; }

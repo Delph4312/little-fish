@@ -153,6 +153,12 @@ function goPage(n) {
   // 除第一页外均不可点击跳转
   if (n === 1) page.value = 1
 }
+// 帖子详情右侧快捷入口：漂流瓶直接打开，板块则回到对应板块列表
+function onPostNavigate(target) {
+  if (target === 'bottle') { view.value = 'bottle'; resetScroll(); return }
+  view.value = 'home'
+  selectSection(target)
+}
 
 // 有个人主页可跳转的楼主/用户名（与评论区一致）
 function isLinkUser(name) {
@@ -196,8 +202,9 @@ onUnmounted(() => clearInterval(whaleTimer))
       </div>
     </div>
 
-    <!-- Banner -->
-    <div class="banner" @click="goHome" v-lazy-bg="images.forum.banner">
+    <!-- Banner：完整展示原图（1600×900），不裁切 -->
+    <div class="banner" @click="goHome">
+      <img class="banner-img" :src="images.forum.banner" alt="浅湾" />
       <div class="banner-title">浅湾</div>
       <div class="banner-sub">QIAN WAN · 靠岸的地方</div>
     </div>
@@ -306,6 +313,7 @@ onUnmounted(() => clearInterval(whaleTimer))
         :post="currentPost"
         @back="goHome"
         @open-profile="openProfileByName"
+        @navigate="onPostNavigate"
       />
       <UserProfile v-else-if="view === 'profile'" :user="profileUser" :posts="profilePostsForUser" @open-post="openPost" @open-diary="view = 'diary'" />
       <PrivateDiary v-else-if="view === 'diary'" @back="view = 'profile'" />
@@ -362,11 +370,12 @@ onUnmounted(() => clearInterval(whaleTimer))
 .user-chip { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
 .uc-av { width: 26px; height: 26px; border-radius: 50%; background: #d7e4dd; color: #46685a; display: grid; place-items: center; font-size: 12px; }
 
-.banner { height: 110px; flex: 0 0 110px; background: linear-gradient(120deg, #12313e 0%, #2b5f6b 50%, #c9a27e 120%); display: grid; place-items: center; position: relative; cursor: pointer; overflow: hidden; }
-.banner::after { content:""; position:absolute; inset:0; background: repeating-linear-gradient(90deg, transparent 0 40px, rgba(255,255,255,.03) 40px 41px); }
-.banner-title { font-size: 44px; font-weight: 700; letter-spacing: 12px; color: #12313e; text-shadow: 0 2px 10px rgba(255,255,255,.7), 0 0 26px rgba(255,255,255,.5); font-family: "STKaiti","KaiTi",serif; position: relative; z-index: 2; }
-.banner::before { content: ""; position: absolute; inset: 0; background: rgba(255,255,255,.28); z-index: 1; }
-.banner-sub { position: absolute; bottom: 12px; font-size: 10px; letter-spacing: 3px; color: #2b4a58; z-index: 2; }
+/* Banner：按容器宽度等比显示完整原图，不裁切（原图 1600×900） */
+.banner { width: 100%; position: relative; cursor: pointer; overflow: hidden; background: #12313e; line-height: 0; }
+.banner-img { display: block; width: 100%; height: auto; }
+.banner::after { content:""; position:absolute; inset:0; background: repeating-linear-gradient(90deg, transparent 0 40px, rgba(255,255,255,.03) 40px 41px); z-index: 1; }
+.banner-title { position: absolute; inset: 0; display: grid; place-items: center; font-size: clamp(30px, 5vw, 54px); font-weight: 700; letter-spacing: 12px; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.6), 0 0 30px rgba(0,0,0,.35); font-family: "STKaiti","KaiTi",serif; z-index: 2; line-height: 1; }
+.banner-sub { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 10px; letter-spacing: 3px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); z-index: 2; }
 
 .section-bar { height: 46px; flex: 0 0 46px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; background: #e8f2f7; border-bottom: 1px solid #cfe0e9; }
 .sections { display: flex; gap: 22px; }
@@ -380,10 +389,11 @@ onUnmounted(() => clearInterval(whaleTimer))
 .profile-back-bar { padding: 8px 22px; background: #fff; border-bottom: 1px solid #e2e7e6; }
 .profile-back-bar button { border: 0; background: transparent; color: #2f6f8f; cursor: pointer; font-size: 12px; }
 .profile-back-bar button:hover { text-decoration: underline; }
-.home-layout { display: flex; gap: 18px; max-width: 1180px; margin: 0 auto; padding: 20px; align-items: flex-start; }
-.home-layout.no-side { max-width: 800px; }
+/* 响应式：宽度随窗口自适应，最大化时不留大片空白；窄窗口侧栏自动收窄 */
+.home-layout { display: flex; gap: clamp(12px, 1.6vw, 24px); width: 100%; max-width: 1600px; margin: 0 auto; padding: clamp(12px, 1.6vw, 26px); align-items: flex-start; box-sizing: border-box; }
 .post-area { flex: 1; min-width: 0; }
-.side-panel { width: 280px; flex: 0 0 280px; display: flex; flex-direction: column; gap: 14px; }
+.side-panel { width: clamp(220px, 22vw, 320px); flex: 0 0 clamp(220px, 22vw, 320px); display: flex; flex-direction: column; gap: 14px; }
+@media (max-width: 900px) { .home-layout { flex-direction: column; } .side-panel { width: 100%; flex: 1 1 auto; flex-direction: row; flex-wrap: wrap; } .side-panel .side-card { flex: 1 1 240px; } }
 .pinned-row { display: flex; align-items: center; gap: 10px; background: #e6f1f9; border: 1px solid #bfd9ea; border-radius: 6px; padding: 12px 16px; margin-bottom: 12px; cursor: pointer; }
 .pin-tag { background: #2f6f8f; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 3px; }
 .pin-title { flex: 1; font-size: 14px; font-weight: 500; color: #234a60; }

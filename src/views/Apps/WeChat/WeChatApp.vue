@@ -210,11 +210,14 @@ function usePlugin() {
 
   <div class="login" v-else>
     <div class="login-card">
-      <div class="login-avatar" :style="{ backgroundImage: `url(${images.avatar.xieyao})` }"></div>
-      <div class="login-name">遥</div>
-      <input v-model="password" type="password" placeholder="请输入微信密码" @keyup.enter="doLogin" />
-      <div v-if="loginError" class="login-err">密码不正确</div>
-      <button class="btn btn-primary" @click="doLogin">进入</button>
+      <div class="login-titlebar"><span>微信</span><span class="lt-ctrl">— □ ×</span></div>
+      <div class="login-body">
+        <div class="login-avatar" :style="{ backgroundImage: `url(${images.avatar.xieyao})`, backgroundSize: 'cover', backgroundPosition: 'center' }"></div>
+        <div class="login-name">遥</div>
+        <input v-model="password" type="password" placeholder="请输入微信密码" @keyup.enter="doLogin" />
+        <div v-if="loginError" class="login-err">密码不正确</div>
+        <button class="btn btn-primary" @click="doLogin">进入</button>
+      </div>
     </div>
   </div>
 </template>
@@ -249,8 +252,11 @@ function usePlugin() {
 .placeholder { display: grid; place-items: center; height: 100%; color: #9aa7ab; }
 .hint-toast { position: absolute; right: 16px; bottom: 16px; background: #fff; border: 1px solid #cdd8d8; border-radius: 6px; padding: 12px 30px 12px 14px; font-size: 12px; line-height: 1.6; max-width: 320px; box-shadow: 0 6px 18px rgba(0,0,0,.15); cursor: pointer; }
 .hint-toast span { color: #9aa7ab; font-size: 10px; display: block; margin-top: 6px; }
-.login { display: grid; place-items: center; height: 100%; background: linear-gradient(160deg, #eaf1ee, #dbe7e2); }
-.login-card { text-align: center; background: #fff; padding: 30px 40px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.12); width: 320px; }
+.login { display: grid; place-items: center; height: 100%; background: #f5f7f6; }
+.login-card { width: 320px; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 12px 34px rgba(0,0,0,.16); }
+.login-titlebar { height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: #2b3236; color: #d5dcdf; font-size: 12px; }
+.lt-ctrl { letter-spacing: 3px; color: #9fb0b6; font-size: 11px; }
+.login-body { text-align: center; padding: 26px 34px 30px; }
 .login-avatar { width: 58px; height: 58px; border-radius: 8px; background-color: #cfe6d6; background-size: cover; background-position: center; margin: 0 auto 8px; }
 .login-name { font-size: 15px; color: #2b3236; margin-bottom: 16px; }
 .login-card h2 { margin: 0 0 6px; font-size: 18px; font-weight: 500; }

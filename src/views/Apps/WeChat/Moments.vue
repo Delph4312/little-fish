@@ -57,10 +57,11 @@ const avatarMap = {
 function imgUrl(name) { return momentImgMap[name] || null }
 function avatarUrl(name) { return avatarMap[name] || null }
 
-// 显示点赞名单：原始 + 我（谢遥）点赞时追加；去重避免「谢遥」出现两次
+// 显示点赞名单：以当前点赞状态为准，过滤掉原始名单里的「谢遥」再按 liked 重新决定是否加入，
+// 这样妈妈那条初始含谢遥的动态在取消点赞后，谢遥名字会立即消失
 function displayLikes(m, i) {
-  const arr = [...(m.likes || [])]
-  if (liked[i] && !arr.includes('谢遥')) arr.push('谢遥')
+  const arr = (m.likes || []).filter((n) => n !== '谢遥')
+  if (liked[i]) arr.push('谢遥')
   return arr
 }
 </script>

@@ -84,7 +84,12 @@ function send() {
       shakeWindow()          // 仅抖动私信窗口，不触发桌面故障效果
       scrollToLatest()       // 自动跟随滚动到最新回复
       idx += 1
-      if (idx < replies.length) setTimeout(pushNext, 700)
+      // 按字数决定下一条的等待时间：每字约 55ms，区间 800ms~3600ms，内容越长读得越从容
+      if (idx < replies.length) {
+        const nextLen = replies[idx].length
+        const wait = Math.min(3600, Math.max(800, nextLen * 55))
+        setTimeout(pushNext, wait)
+      }
     }
     pushNext()
     game.markWhaleTriggered('chat')

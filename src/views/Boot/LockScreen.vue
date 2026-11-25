@@ -19,9 +19,8 @@ const now = ref(new Date())
 const timeText = computed(() =>
   now.value.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
 )
-const dateText = computed(() =>
-  now.value.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
-)
+// 游戏内时间线固定为 2026年11月23日，仅时分跟随电脑时间
+const dateText = computed(() => '2026年11月23日')
 
 let timer
 onMounted(() => {
