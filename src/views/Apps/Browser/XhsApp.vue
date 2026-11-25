@@ -161,11 +161,11 @@ function sendComment(note) {
 .logo-mark { width: 30px; height: 30px; border-radius: 8px; background: #ff2442; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 16px; }
 .logo-word { font-size: 17px; font-weight: 700; color: #ff2442; letter-spacing: 1px; }
 .side-nav { display: flex; flex-direction: column; gap: 4px; padding: 0 12px; }
-.side-item { padding: 10px 14px; font-size: 14px; color: #555; border-radius: 8px; cursor: pointer; }
-.side-item:hover { background: #f2f2f2; }
-.side-item.active { background: #ffe9ed; color: #ff2442; font-weight: 600; }
-.side-item.disabled { color: #c2c2c2; cursor: default; }
-.side-item.disabled:hover { background: transparent; }
+/* 左侧导航：所有板块文字统一黑色；选中框为黑色描边。发布/通知/我无内容且不可选定切换 */
+.side-item { padding: 10px 14px; font-size: 14px; color: #000; border: 1px solid transparent; border-radius: 8px; cursor: default; box-sizing: border-box; }
+.side-item:not(.disabled) { cursor: pointer; }
+.side-item:not(.disabled):hover { background: #f2f2f2; }
+.side-item.active { background: #fff; color: #000; font-weight: 600; border-color: #000; }
 .side-foot { margin-top: auto; padding: 0 20px; font-size: 11px; color: #bbb; }
 .xhs-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .xhs-top { height: 60px; flex: 0 0 60px; display: flex; align-items: center; gap: 16px; padding: 0 24px; border-bottom: 1px solid #f0f0f0; }

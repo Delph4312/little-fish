@@ -208,8 +208,8 @@ onUnmounted(() => clearInterval(whaleTimer))
       </div>
     </div>
 
-    <!-- Banner：完整展示原图（1600×900），不裁切 -->
-    <div class="banner" @click="goHome">
+    <!-- Banner：首页 16:9 裁掉下方空白；帖子详情页进一步裁成 6:1 中间段 -->
+    <div class="banner" :class="{ 'banner-detail': view === 'post' }" @click="goHome">
       <img class="banner-img" :src="images.forum.banner" alt="浅湾" />
       <div class="banner-title">浅湾</div>
       <div class="banner-sub">QIAN WAN · 靠岸的地方</div>
@@ -344,13 +344,15 @@ onUnmounted(() => clearInterval(whaleTimer))
       </div>
     </div>
 
-    <!-- 私信悬浮窗：登录后右下角，可收起 -->
+    <!-- 私信悬浮窗：登录后悬浮于网页右下角，页面上下滚动时始终跟随保持在可见区域 -->
     <div v-if="game.forumLoggedIn" class="float-msg">
-      <button class="float-msg-toggle" @click="game.forumMsgsOpen = !game.forumMsgsOpen">
-        💬 私信 <span>{{ game.forumMsgsOpen ? '▾' : '▴' }}</span>
-      </button>
-      <div v-show="game.forumMsgsOpen" class="float-msg-panel">
-        <Messages :active="game.forumMsgsOpen" />
+      <div class="float-msg-inner">
+        <button class="float-msg-toggle" @click="game.forumMsgsOpen = !game.forumMsgsOpen">
+          💬 私信 <span>{{ game.forumMsgsOpen ? '▾' : '▴' }}</span>
+        </button>
+        <div v-show="game.forumMsgsOpen" class="float-msg-panel">
+          <Messages :active="game.forumMsgsOpen" />
+        </div>
       </div>
     </div>
 
@@ -376,9 +378,13 @@ onUnmounted(() => clearInterval(whaleTimer))
 .user-chip { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
 .uc-av { width: 26px; height: 26px; border-radius: 50%; background: #d7e4dd; color: #46685a; display: grid; place-items: center; font-size: 12px; }
 
-/* Banner：按容器宽度等比显示完整原图，不裁切（原图 1600×900） */
-.banner { width: 100%; position: relative; cursor: pointer; background: #12313e; line-height: 0; }
-.banner-img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; }
+/* Banner：保持 16:9 容器，放大后裁掉原图下方大片海面与水印，保留标题和鲸鱼主体 */
+.banner { width: 100%; flex: 0 0 auto; aspect-ratio: 16 / 9; position: relative; cursor: pointer; background: #12313e; line-height: 0; overflow: hidden; }
+.banner-img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; transform: scale(1.16); transform-origin: center top; }
+/* 帖子详情页：进一步裁成 6:1 横条，只显示原图中间部分（浅湾标题 + 鲸鱼主体） */
+.banner.banner-detail { aspect-ratio: 6 / 1; }
+.banner-detail .banner-img { object-position: center 52%; transform: none; }
+.banner-detail .banner-sub { bottom: 6px; }
 .banner::after { content:""; position:absolute; inset:0; background: repeating-linear-gradient(90deg, transparent 0 40px, rgba(255,255,255,.03) 40px 41px); z-index: 1; }
 .banner-title { position: absolute; inset: 0; display: grid; place-items: center; font-size: clamp(30px, 5vw, 54px); font-weight: 700; letter-spacing: 12px; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.6), 0 0 30px rgba(0,0,0,.35); font-family: "STKaiti","KaiTi",serif; z-index: 2; line-height: 1; }
 .banner-sub { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 10px; letter-spacing: 3px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); z-index: 2; }
@@ -441,7 +447,10 @@ onUnmounted(() => clearInterval(whaleTimer))
 .admin-box .btn { margin: 4px; font-size: 12px; }
 .admin-on { font-size: 13px; color: #3c8a5c; margin-bottom: 14px; }
 
-.float-msg { position: absolute; right: 18px; bottom: 44px; z-index: 700; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+/* 私信：sticky 零高度占位，使它相对论坛滚动区固定在右下角；
+   玩家上下滚动网页时私信悬浮于内容之上并跟随保持在可见区域，不再随内容滚出视野。 */
+.float-msg { position: sticky; bottom: 44px; z-index: 700; height: 0; align-self: flex-end; margin-right: 18px; pointer-events: none; }
+.float-msg-inner { position: absolute; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; pointer-events: auto; }
 .float-msg-toggle { border: 0; background: #2f6f8f; color: #fff; border-radius: 18px; padding: 8px 16px; font-size: 12px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
 .float-msg-toggle span { margin-left: 6px; }
 .float-msg-panel { width: 300px; height: 380px; background: #fff; border: 1px solid #d5dcdb; border-radius: 8px; overflow: hidden; box-shadow: 0 12px 32px rgba(0,0,0,.3); }
