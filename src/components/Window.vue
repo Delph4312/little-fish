@@ -109,11 +109,11 @@ function onResizePointerDown(e, dir) {
 <template>
   <div
     class="window"
-    :class="{ active: isActive, maximized: win.maximized, resizing }"
+    :class="{ active: isActive, maximized: win.maximized, resizing, 'no-chrome': win.chrome === false }"
     :style="style"
     @pointerdown="system.focusWindow(win.id)"
   >
-    <div class="window-bar" @pointerdown="onBarPointerDown">
+    <div v-if="win.chrome !== false" class="window-bar" @pointerdown="onBarPointerDown">
       <div class="title">
         <span>{{ win.icon }}</span>
         <span>{{ win.title }}</span>
@@ -132,7 +132,7 @@ function onResizePointerDown(e, dir) {
     </div>
 
     <!-- 8 方向缩放手柄：覆盖窗口边缘一圈，z-index 高于应用内容 -->
-    <template v-if="!win.maximized">
+    <template v-if="!win.maximized && win.chrome !== false">
       <div class="rs rs-n" @pointerdown="onResizePointerDown($event, 'n')"></div>
       <div class="rs rs-s" @pointerdown="onResizePointerDown($event, 's')"></div>
       <div class="rs rs-w" @pointerdown="onResizePointerDown($event, 'w')"></div>
@@ -177,4 +177,6 @@ function onResizePointerDown(e, dir) {
   border-radius: 2px;
 }
 .window.resizing { user-select: none; }
+/* 无外壳模式：去掉外层标题栏、边框与阴影，仅保留应用内容（如微信登录卡片） */
+.window.no-chrome { background: transparent; border: 0; box-shadow: none; border-radius: 0; }
 </style>

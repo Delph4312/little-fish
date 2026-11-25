@@ -117,9 +117,15 @@ function resetScroll() {
     if (forumRoot.value) forumRoot.value.scrollTop = 0
   })
 }
+const postFrom = ref('home') // 进入帖子详情前的来源视图，返回时还原而非重置回首页
 function openPost(post) {
+  postFrom.value = view.value === 'post' ? 'home' : view.value
   currentPost.value = post
   view.value = 'post'
+  resetScroll()
+}
+function backFromPost() {
+  view.value = postFrom.value
   resetScroll()
 }
 function openProfile(user) {
@@ -311,7 +317,7 @@ onUnmounted(() => clearInterval(whaleTimer))
       <ForumPost
         v-else-if="view === 'post'"
         :post="currentPost"
-        @back="goHome"
+        @back="backFromPost"
         @open-profile="openProfileByName"
         @navigate="onPostNavigate"
       />
@@ -371,8 +377,8 @@ onUnmounted(() => clearInterval(whaleTimer))
 .uc-av { width: 26px; height: 26px; border-radius: 50%; background: #d7e4dd; color: #46685a; display: grid; place-items: center; font-size: 12px; }
 
 /* Banner：按容器宽度等比显示完整原图，不裁切（原图 1600×900） */
-.banner { width: 100%; position: relative; cursor: pointer; overflow: hidden; background: #12313e; line-height: 0; }
-.banner-img { display: block; width: 100%; height: auto; }
+.banner { width: 100%; position: relative; cursor: pointer; background: #12313e; line-height: 0; }
+.banner-img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; }
 .banner::after { content:""; position:absolute; inset:0; background: repeating-linear-gradient(90deg, transparent 0 40px, rgba(255,255,255,.03) 40px 41px); z-index: 1; }
 .banner-title { position: absolute; inset: 0; display: grid; place-items: center; font-size: clamp(30px, 5vw, 54px); font-weight: 700; letter-spacing: 12px; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.6), 0 0 30px rgba(0,0,0,.35); font-family: "STKaiti","KaiTi",serif; z-index: 2; line-height: 1; }
 .banner-sub { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 10px; letter-spacing: 3px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); z-index: 2; }

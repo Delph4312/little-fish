@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import {
   wechatSidebar, conversationList, conversations, moments, momentsCover,
   teacherHints, favorites, wechatAccount, contactApplication
@@ -14,6 +14,14 @@ import Contacts from './Contacts.vue'
 
 const game = useGameStore()
 const system = useSystemStore()
+
+// 登录前：去掉外围大窗口外壳，仅保留登录卡片与内部深色操作栏；登录后恢复外壳
+function syncWindowChrome() {
+  const win = system.windows.find((w) => w.app === 'wechat')
+  if (win) win.chrome = game.wechatLoggedIn
+}
+onMounted(syncWindowChrome)
+watch(() => game.wechatLoggedIn, syncWindowChrome)
 const activeNav = ref('聊天')
 const activeConv = ref(null) // 刚进入时不选中任何会话（姐姐对话需玩家主动点开）
 // 登录状态以 game store 为准：关闭窗口再打开仍保持已登录
@@ -215,7 +223,7 @@ function usePlugin() {
         <div class="login-avatar" :style="{ backgroundImage: `url(${images.avatar.xieyao})`, backgroundSize: 'cover', backgroundPosition: 'center' }"></div>
         <div class="login-name">遥</div>
         <input v-model="password" type="password" placeholder="请输入微信密码" @keyup.enter="doLogin" />
-        <div v-if="loginError" class="login-err">密码不正确</div>
+        <div v-if="loginError" class="login-err">微信密码在电脑里。</div>
         <button class="btn btn-primary" @click="doLogin">进入</button>
       </div>
     </div>

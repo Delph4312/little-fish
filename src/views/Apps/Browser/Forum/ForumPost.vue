@@ -39,8 +39,11 @@ const preparedComments = computed(() => {
   mineComments.forEach((mc) => {
     if (!kept.some((k) => k.text === mc.text && k.user === mc.user)) kept.push(mc)
   })
-  // 第16项：回复点赞数不再为 0，补一个非零数
-  kept = kept.map((c) => ({ ...c, likes: (c.likes > 0 ? c.likes : (Math.abs(hashStr(c.user + c.text)) % 90) + 3) }))
+  // 老评论点赞数兜底为非零；用户自己发出的新回复点赞数保持 0
+  kept = kept.map((c) => ({
+    ...c,
+    likes: c.mine ? 0 : (c.likes > 0 ? c.likes : (Math.abs(hashStr(c.user + c.text)) % 90) + 3)
+  }))
   // 第35项：补日期，按时间从早到晚排序（最早在前，最新在底）
   kept = kept.map((c, idx) => ({
     ...c,
@@ -266,8 +269,8 @@ function isLinkUser(name) {
 .post-detail { min-height: 100%; background: #fff; }
 .bar { display: flex; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid #eef1f0; font-size: 12px; color: #6b7b82; }
 .bar button { border: 0; background: transparent; color: #2f6f8f; cursor: pointer; font-size: 12px; }
-/* 帖子详情两栏：内容卡片靠左，右侧保留侧栏；随窗口响应式缩放 */
-.detail-layout { display: flex; gap: clamp(12px, 1.6vw, 24px); width: 100%; max-width: 1600px; margin: 0 auto; padding: clamp(12px, 1.6vw, 26px); align-items: flex-start; box-sizing: border-box; }
+/* 帖子详情两栏：主楼/评论区与右侧侧栏作为一整组水平居中，保持原有尺寸比例 */
+.detail-layout { display: flex; justify-content: center; gap: clamp(12px, 1.6vw, 24px); width: 100%; max-width: 1600px; margin: 0 auto; padding: clamp(12px, 1.6vw, 26px); align-items: flex-start; box-sizing: border-box; }
 .wrap { flex: 1; min-width: 0; max-width: 900px; margin: 0; padding: 4px 0; box-sizing: border-box; }
 .detail-side { width: clamp(220px, 22vw, 320px); flex: 0 0 clamp(220px, 22vw, 320px); display: flex; flex-direction: column; gap: 14px; }
 .side-card { background: #fafbfb; border: 1px solid #e2e7e6; border-radius: 6px; padding: 14px; }

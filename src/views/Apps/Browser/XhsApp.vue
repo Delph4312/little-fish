@@ -26,6 +26,8 @@ function back() {
   activeNav.value = '发现'
 }
 function selectNav(n) {
+  // 仅「发现」可进入；其余板块无内容且不可切换
+  if (n !== '发现') return
   activeNav.value = n
   view.value = 'feed'
 }
@@ -64,7 +66,7 @@ function sendComment(note) {
           v-for="n in xhsNav"
           :key="n"
           class="side-item"
-          :class="{ active: activeNav === n }"
+          :class="{ active: activeNav === n, disabled: n !== '发现' }"
           @click="selectNav(n)"
         >{{ n }}</div>
       </div>
@@ -80,41 +82,8 @@ function sendComment(note) {
         </div>
       </header>
 
-      <!-- 其他板块内容（发布/通知/我） -->
-      <div class="xhs-content nav-panel" v-if="activeNav !== '发现'">
-        <template v-if="activeNav === '发布'">
-          <div class="panel-head">发布笔记</div>
-          <div class="publish-box">
-            <div class="pub-upload">＋ 上传图片 / 视频</div>
-            <input class="pub-title" placeholder="填写标题，更容易被看到" />
-            <textarea class="pub-body" placeholder="分享你的生活和想法…"></textarea>
-            <button class="btn btn-primary pub-btn">发布笔记</button>
-          </div>
-        </template>
-        <template v-else-if="activeNav === '通知'">
-          <div class="panel-head">通知</div>
-          <div class="notice-list">
-            <div class="notice-item"><span class="ni-ic">❤️</span><div><b>橘子汽水</b> 赞了你的笔记 <span class="ni-time">昨天 21:14</span></div></div>
-            <div class="notice-item"><span class="ni-ic">💬</span><div><b>慢半拍</b> 评论了你：写得好真实 <span class="ni-time">2天前</span></div></div>
-            <div class="notice-item"><span class="ni-ic">⭐</span><div><b>看到我叫我去做项目</b> 收藏了你的笔记 <span class="ni-time">3天前</span></div></div>
-          </div>
-        </template>
-        <template v-else-if="activeNav === '我'">
-          <div class="profile-head">
-            <div class="ph-avatar">我</div>
-            <div class="ph-name">我的小红书</div>
-            <div class="ph-id">小红书号：xiaoyu_2026</div>
-          </div>
-          <div class="profile-stats"><span><b>12</b> 关注</span><span><b>38</b> 粉丝</span><span><b>156</b> 获赞与收藏</span></div>
-          <div class="panel-head">我的笔记</div>
-          <div class="profile-notes">
-            <div class="pn-card"><div class="pn-cover"></div><div class="pn-title">我的第一篇笔记</div></div>
-          </div>
-        </template>
-      </div>
-
       <!-- 笔记流 -->
-      <div class="xhs-content" v-else-if="activeNav === '发现' && view === 'feed'">
+      <div class="xhs-content" v-if="activeNav === '发现' && view === 'feed'">
         <div class="feed-grid">
           <div v-for="note in allNotes" :key="note.id" class="note-card" @click="openNote(note)">
             <div class="note-cover" :style="{ background: note.cover || 'linear-gradient(135deg,#c9a27e,#6e9aa8)' }">
@@ -195,6 +164,8 @@ function sendComment(note) {
 .side-item { padding: 10px 14px; font-size: 14px; color: #555; border-radius: 8px; cursor: pointer; }
 .side-item:hover { background: #f2f2f2; }
 .side-item.active { background: #ffe9ed; color: #ff2442; font-weight: 600; }
+.side-item.disabled { color: #c2c2c2; cursor: default; }
+.side-item.disabled:hover { background: transparent; }
 .side-foot { margin-top: auto; padding: 0 20px; font-size: 11px; color: #bbb; }
 .xhs-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .xhs-top { height: 60px; flex: 0 0 60px; display: flex; align-items: center; gap: 16px; padding: 0 24px; border-bottom: 1px solid #f0f0f0; }
@@ -243,29 +214,6 @@ function sendComment(note) {
 .c-like { font-size: 11px; color: #999; cursor: pointer; user-select: none; }
 .c-like.on { color: #ff2442; }
 .no-comment { font-size: 12px; color: #bbb; text-align: center; padding: 16px; }
-/* 非发现板块内容页 */
-.nav-panel { background: #fff; }
-.panel-head { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 18px; }
-.publish-box { max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
-.pub-upload { height: 180px; border: 1px dashed #d8d8d8; border-radius: 10px; display: grid; place-items: center; color: #aaa; font-size: 14px; background: #fafafa; cursor: pointer; }
-.pub-title { padding: 10px 12px; border: 1px solid #eee; border-radius: 8px; font-size: 13px; outline: none; }
-.pub-body { min-height: 140px; padding: 10px 12px; border: 1px solid #eee; border-radius: 8px; font-size: 13px; outline: none; resize: vertical; }
-.pub-btn { align-self: flex-end; border-radius: 20px; background: #ff2442; border-color: #ff2442; padding: 8px 24px; }
-.notice-list { max-width: 640px; }
-.notice-item { display: flex; align-items: flex-start; gap: 12px; padding: 14px 4px; border-bottom: 1px solid #f2f2f2; font-size: 13px; color: #555; }
-.ni-ic { font-size: 18px; }
-.notice-item b { color: #333; }
-.ni-time { color: #bbb; font-size: 11px; margin-left: 8px; }
-.profile-head { text-align: center; padding: 20px 0 12px; }
-.ph-avatar { width: 64px; height: 64px; border-radius: 50%; background: #ffe9ed; color: #ff2442; display: grid; place-items: center; font-size: 24px; margin: 0 auto 10px; }
-.ph-name { font-size: 16px; font-weight: 600; color: #333; }
-.ph-id { font-size: 11px; color: #bbb; margin-top: 4px; }
-.profile-stats { display: flex; justify-content: center; gap: 40px; padding: 16px 0 24px; border-bottom: 1px solid #f2f2f2; margin-bottom: 22px; font-size: 12px; color: #888; }
-.profile-stats b { color: #333; font-size: 15px; }
-.profile-notes { display: flex; gap: 16px; }
-.pn-card { width: 180px; }
-.pn-cover { height: 180px; border-radius: 10px; background: linear-gradient(135deg,#c9a27e,#6e9aa8); }
-.pn-title { font-size: 12px; color: #555; padding: 8px 2px; }
 .comment-compose { display: flex; gap: 8px; margin-top: 12px; }
 .comment-compose input { flex: 1; padding: 9px 12px; border: 1px solid #e8e8e8; border-radius: 20px; font-size: 13px; outline: none; }
 .comment-compose input:focus { border-color: #ff2442; }
