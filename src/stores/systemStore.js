@@ -85,6 +85,16 @@ export const useSystemStore = defineStore('system', {
       win.y = Math.max(0, win.y + dy)
     },
 
+    // 直接更新窗口位置与尺寸（如登录卡片收缩为卡片自身大小）
+    setWindowRect(id, { x, y, w, h } = {}) {
+      const win = this.windows.find((w) => w.id === id)
+      if (!win) return
+      if (x !== undefined) win.x = x
+      if (y !== undefined) win.y = y
+      if (w !== undefined) win.w = w
+      if (h !== undefined) win.h = h
+    },
+
     resizeWindow(id, { dx = 0, dy = 0, dw = 0, dh = 0, left = false, top = false }) {
       const win = this.windows.find((w) => w.id === id)
       if (!win || win.maximized) return

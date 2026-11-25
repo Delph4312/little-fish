@@ -28,10 +28,9 @@ const style = computed(() => ({
   display: props.win.minimized ? 'none' : 'flex'
 }))
 
-// 标题栏拖动：document 级监听
-function onBarPointerDown(e) {
+// 标题栏拖动：document 级监听（通用，外层标题栏与内部登录卡片标题栏共用）
+function startDrag(e) {
   if (e.button !== 0 || props.win.maximized) return
-  if (e.target.closest('.window-controls')) return
   system.focusWindow(props.win.id)
   const startX = e.clientX
   const startY = e.clientY
@@ -48,6 +47,15 @@ function onBarPointerDown(e) {
   }
   document.addEventListener('pointermove', onMove)
   document.addEventListener('pointerup', onUp)
+}
+function onBarPointerDown(e) {
+  if (e.target.closest('.window-controls')) return
+  startDrag(e)
+}
+// 无外壳模式下，内部登录卡片的深色操作栏作为拖拽把手（事件委托）
+function onBodyPointerDown(e) {
+  if (props.win.chrome !== false) return
+  if (e.target.closest('.login-titlebar')) startDrag(e)
 }
 
 // 边缘/角落缩放：document 级监听，和标题栏拖动同一套机制，
@@ -126,7 +134,7 @@ function onResizePointerDown(e, dir) {
         <button class="close" title="关闭" @click.stop="system.closeWindow(win.id)">×</button>
       </div>
     </div>
-    <div class="window-body">
+    <div class="window-body" @pointerdown="onBodyPointerDown">
       <component v-if="appComponent" :is="appComponent" v-bind="win.props" />
       <div v-else class="center" style="height:100%;color:#8a979c">应用尚未实现：{{ win.app }}</div>
     </div>
@@ -179,4 +187,5 @@ function onResizePointerDown(e, dir) {
 .window.resizing { user-select: none; }
 /* 无外壳模式：去掉外层标题栏、边框与阴影，仅保留应用内容（如微信登录卡片） */
 .window.no-chrome { background: transparent; border: 0; box-shadow: none; border-radius: 0; }
+.window.no-chrome .window-body { flex: 0 0 auto; overflow: visible; }
 </style>

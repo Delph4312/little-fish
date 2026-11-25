@@ -15,10 +15,25 @@ import Contacts from './Contacts.vue'
 const game = useGameStore()
 const system = useSystemStore()
 
-// 登录前：去掉外围大窗口外壳，仅保留登录卡片与内部深色操作栏；登录后恢复外壳
+// 登录前：去掉外围大窗口外壳，外层收缩为登录卡片自身大小并居中，仅保留卡片与内部深色操作栏；登录后恢复正常大窗口
+const LOGIN_W = 320
+const LOGIN_H = 300
 function syncWindowChrome() {
   const win = system.windows.find((w) => w.app === 'wechat')
-  if (win) win.chrome = game.wechatLoggedIn
+  if (!win) return
+  win.chrome = game.wechatLoggedIn
+  if (!game.wechatLoggedIn) {
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    system.setWindowRect(win.id, {
+      w: LOGIN_W,
+      h: LOGIN_H,
+      x: Math.max(0, Math.round((vw - LOGIN_W) / 2)),
+      y: Math.max(0, Math.round((vh - LOGIN_H) / 2))
+    })
+  } else {
+    system.setWindowRect(win.id, { w: 900, h: 600 })
+  }
 }
 onMounted(syncWindowChrome)
 watch(() => game.wechatLoggedIn, syncWindowChrome)
@@ -232,6 +247,7 @@ function usePlugin() {
 
 <style scoped>
 .wechat { display: flex; width: 100%; height: 100%; background: #f5f7f6; position: relative; }
+.wechat:has(.login) { background: transparent; }
 .rail { width: 62px; background: #2b3236; display: flex; flex-direction: column; align-items: center; color: #cfd6d8; flex: 0 0 62px; }
 .me { padding: 18px 0 12px; }
 .me .avatar { width: 34px; height: 34px; border-radius: 4px; background: #cfe6d6; color: #2b5c3a; display: grid; place-items: center; font-size: 16px; }
@@ -260,8 +276,8 @@ function usePlugin() {
 .placeholder { display: grid; place-items: center; height: 100%; color: #9aa7ab; }
 .hint-toast { position: absolute; right: 16px; bottom: 16px; background: #fff; border: 1px solid #cdd8d8; border-radius: 6px; padding: 12px 30px 12px 14px; font-size: 12px; line-height: 1.6; max-width: 320px; box-shadow: 0 6px 18px rgba(0,0,0,.15); cursor: pointer; }
 .hint-toast span { color: #9aa7ab; font-size: 10px; display: block; margin-top: 6px; }
-.login { display: grid; place-items: center; height: 100%; background: #f5f7f6; }
-.login-card { width: 320px; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 12px 34px rgba(0,0,0,.16); }
+.login { display: grid; place-items: center; height: 100%; background: transparent; }
+.login-card { width: 320px; height: 100%; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 12px 34px rgba(0,0,0,.16); }
 .login-titlebar { height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: #2b3236; color: #d5dcdf; font-size: 12px; }
 .lt-ctrl { letter-spacing: 3px; color: #9fb0b6; font-size: 11px; }
 .login-body { text-align: center; padding: 26px 34px 30px; }
