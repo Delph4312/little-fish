@@ -25,7 +25,7 @@ export const useSystemStore = defineStore('system', {
   },
 
   actions: {
-    openWindow({ app, title, icon, component, props = {}, w = 820, h = 560 }) {
+    openWindow({ app, title, icon, component, props = {}, w = 820, h = 560, chrome = true }) {
       const existing = this.windows.find((win) => win.app === app)
       if (existing) {
         this.focusWindow(existing.id)
@@ -33,6 +33,9 @@ export const useSystemStore = defineStore('system', {
       }
       const offset = (this.windows.length % 6) * 28
       const id = `${app}-${Date.now()}`
+      // 无外壳（登录卡片）时在桌面内居中；普通窗口沿用偏移定位
+      const x = chrome ? 90 + offset : Math.max(0, Math.round((window.innerWidth - w) / 2))
+      const y = chrome ? 60 + offset : Math.max(0, Math.round((window.innerHeight - h) / 2))
       this.windows.push({
         id,
         app,
@@ -40,10 +43,11 @@ export const useSystemStore = defineStore('system', {
         icon,
         component,
         props,
-        x: 90 + offset,
-        y: 60 + offset,
+        x,
+        y,
         w,
         h,
+        chrome,
         z: ++this.zCounter,
         minimized: false,
         maximized: false

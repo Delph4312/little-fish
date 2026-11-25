@@ -35,12 +35,15 @@ onUnmounted(() => clearInterval(timer))
 
 function openApp(app) {
   const meta = icons.find((i) => i.app === app) || {}
+  // 微信未登录：初始即为登录卡片大小、无外壳，避免先渲染大窗口再收缩造成闪烁
+  const loginCard = app === 'wechat' && !game.wechatLoggedIn
   system.openWindow({
     app,
     title: meta.label || app,
     icon: meta.glyph || '▣',
-    w: meta.w || 860,
-    h: meta.h || 560
+    w: loginCard ? 320 : (meta.w || 860),
+    h: loginCard ? 300 : (meta.h || 560),
+    chrome: !loginCard
   })
   showStart.value = false
   clearSelection()

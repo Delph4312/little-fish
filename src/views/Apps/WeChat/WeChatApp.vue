@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import {
   wechatSidebar, conversationList, conversations, moments, momentsCover,
   teacherHints, favorites, wechatAccount, contactApplication
@@ -15,28 +15,18 @@ import Contacts from './Contacts.vue'
 const game = useGameStore()
 const system = useSystemStore()
 
-// 登录前：去掉外围大窗口外壳，外层收缩为登录卡片自身大小并居中，仅保留卡片与内部深色操作栏；登录后恢复正常大窗口
-const LOGIN_W = 320
-const LOGIN_H = 300
+// 登录后：从登录卡片恢复为正常大窗口外壳；登录态初始尺寸由打开流程直接设定，避免挂载后二次收缩闪烁
+const wechatWin = computed(() => system.windows.find((w) => w.app === 'wechat') || null)
 function syncWindowChrome() {
-  const win = system.windows.find((w) => w.app === 'wechat')
+  const win = wechatWin.value
   if (!win) return
   win.chrome = game.wechatLoggedIn
-  if (!game.wechatLoggedIn) {
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    system.setWindowRect(win.id, {
-      w: LOGIN_W,
-      h: LOGIN_H,
-      x: Math.max(0, Math.round((vw - LOGIN_W) / 2)),
-      y: Math.max(0, Math.round((vh - LOGIN_H) / 2))
-    })
-  } else {
-    system.setWindowRect(win.id, { w: 900, h: 600 })
-  }
+  if (game.wechatLoggedIn) system.setWindowRect(win.id, { w: 900, h: 600 })
 }
-onMounted(syncWindowChrome)
 watch(() => game.wechatLoggedIn, syncWindowChrome)
+
+function closeWechat() { if (wechatWin.value) system.closeWindow(wechatWin.value.id) }
+function minimizeWechat() { if (wechatWin.value) system.minimizeWindow(wechatWin.value.id) }
 const activeNav = ref('聊天')
 const activeConv = ref(null) // 刚进入时不选中任何会话（姐姐对话需玩家主动点开）
 // 登录状态以 game store 为准：关闭窗口再打开仍保持已登录
@@ -233,7 +223,13 @@ function usePlugin() {
 
   <div class="login" v-else>
     <div class="login-card">
-      <div class="login-titlebar"><span>微信</span><span class="lt-ctrl">— □ ×</span></div>
+      <div class="login-titlebar">
+        <span>微信</span>
+        <span class="lt-ctrl">
+          <button class="lt-btn" title="最小化" @click="minimizeWechat">—</button>
+          <button class="lt-btn lt-close" title="关闭" @click="closeWechat">×</button>
+        </span>
+      </div>
       <div class="login-body">
         <div class="login-avatar" :style="{ backgroundImage: `url(${images.avatar.xieyao})`, backgroundSize: 'cover', backgroundPosition: 'center' }"></div>
         <div class="login-name">遥</div>
@@ -279,7 +275,10 @@ function usePlugin() {
 .login { display: grid; place-items: center; height: 100%; background: transparent; }
 .login-card { width: 320px; height: 100%; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 12px 34px rgba(0,0,0,.16); }
 .login-titlebar { height: 34px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: #2b3236; color: #d5dcdf; font-size: 12px; }
-.lt-ctrl { letter-spacing: 3px; color: #9fb0b6; font-size: 11px; }
+.lt-ctrl { display: flex; align-items: center; gap: 2px; }
+.lt-btn { border: 0; background: transparent; color: #9fb0b6; font-size: 13px; line-height: 1; width: 28px; height: 24px; border-radius: 4px; cursor: pointer; }
+.lt-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
+.lt-btn.lt-close:hover { background: #c04242; color: #fff; }
 .login-body { text-align: center; padding: 26px 34px 30px; }
 .login-avatar { width: 58px; height: 58px; border-radius: 8px; background-color: #cfe6d6; background-size: cover; background-position: center; margin: 0 auto 8px; }
 .login-name { font-size: 15px; color: #2b3236; margin-bottom: 16px; }
